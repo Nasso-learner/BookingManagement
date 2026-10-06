@@ -1,0 +1,38 @@
+{% extends "base/base.html" %}
+{% load ui %}
+{% block title %}Patients{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Patients</h1><p>Registered patients and their activity.</p></div></div>
+<div class="card-x">
+  <form method="get" class="card-x-header flex-wrap">
+    <nav class="segmented">
+      <a href="?" class="{% if not f.is_active %}active{% endif %}">All</a>
+      <a href="?is_active=1" class="{% if f.is_active == '1' %}active{% endif %}">Active</a>
+      <a href="?is_active=0" class="{% if f.is_active == '0' %}active{% endif %}">Inactive</a>
+    </nav>
+    <div class="input-icon" style="min-width:260px"><i class="bi bi-search"></i>
+      <input type="hidden" name="is_active" value="{{ f.is_active|default:'' }}">
+      <input class="form-control form-control-sm" name="q" value="{{ f.q|default:'' }}" placeholder="Name, email, phone or code" aria-label="Search patients"></div>
+  </form>
+  {% if patients %}
+  <div class="table-responsive"><table class="table table-x">
+    <thead><tr><th>Patient</th><th>Contact</th><th>City</th><th>Appointments</th><th>Joined</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+    <tbody>{% for p in patients %}
+      <tr>
+        <td data-label="Patient"><div class="person"><span class="avatar avatar-sm">{{ p.full_name|initials }}</span><div><div class="cell-title">{{ p.full_name }}</div><div class="cell-sub">{{ p.patient_code }}</div></div></div></td>
+        <td data-label="Contact"><div>{{ p.email }}</div><div class="cell-sub">{{ p.phone_number|default:"—" }}</div></td>
+        <td data-label="City">{{ p.city|default:"—" }}</td>
+        <td data-label="Appointments"><a class="chip chip-primary" href="/admin/appointments/?patient={{ p.id }}">{{ p.appointments_count }} <i class="bi bi-arrow-right"></i></a></td>
+        <td data-label="Joined">{{ p.created_at|as_datetime|date:"d M Y" }}</td>
+        <td data-label="Status">{% if p.is_active %}<span class="status status-completed">Active</span>{% else %}<span class="status status-cancelled">Inactive</span>{% endif %}</td>
+        <td data-label="" class="text-end">
+          <form method="post" action="/admin/patients/{{ p.id }}/toggle/" data-loading {% if p.is_active %}data-confirm="Deactivate {{ p.full_name }}? They won't be able to log in."{% endif %}>{% csrf_token %}
+            <input type="hidden" name="is_active" value="{% if p.is_active %}0{% else %}1{% endif %}">
+            {% if p.is_active %}<button class="btn btn-sm btn-outline-danger">Deactivate</button>{% else %}<button class="btn btn-sm btn-soft">Activate</button>{% endif %}
+          </form></td>
+      </tr>{% endfor %}</tbody>
+  </table></div>
+  {% include "partials/pagination.html" %}
+  {% else %}<div class="empty"><div class="empty-icon"><i class="bi bi-people"></i></div><h3>No patients found</h3></div>{% endif %}
+</div>
+{% endblock %}

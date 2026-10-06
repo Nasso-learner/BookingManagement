@@ -1,0 +1,9 @@
+<div class="toast-stack" id="toastStack" aria-live="polite">
+  {% for message in messages %}
+  <div class="toast-x {{ message.tags }}" role="status">
+    <span class="toast-icon"><i class="bi {% if message.tags == 'success' %}bi-check2-circle{% elif message.tags == 'error' %}bi-exclamation-octagon{% else %}bi-info-circle{% endif %}"></i></span>
+    <div class="small fw-semibold text-dark">{{ message }}</div>
+    <button type="button" class="btn-close" aria-label="Dismiss" data-toast-close></button>
+  </div>
+  {% endfor %}
+</div>

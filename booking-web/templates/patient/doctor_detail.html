@@ -1,0 +1,62 @@
+{% extends "base/base.html" %}
+{% load ui static %}
+{% block title %}Dr. {{ doctor.full_name }}{% endblock %}
+{% block content %}
+<div class="breadcrumb-x"><a href="/patient/doctors/">Doctors</a><i class="bi bi-chevron-right small"></i><span>Dr. {{ doctor.full_name }}</span></div>
+<div class="row g-4 mt-1">
+  <div class="col-lg-8">
+    <div class="card-x mb-4 fade-up">
+      <div class="profile-cover"></div>
+      <div class="profile-head">
+        {% if doctor.profile_image %}<img class="avatar avatar-xl" src="{{ doctor.profile_image|media }}" alt="Dr. {{ doctor.full_name }}">{% else %}<span class="avatar avatar-xl">{{ doctor.full_name|initials }}</span>{% endif %}
+        <div class="flex-grow-1">
+          <h1 class="h3 mb-1">Dr. {{ doctor.full_name }}</h1>
+          <div class="doc-spec fw-semibold" style="color:var(--primary-600)">{{ doctor.specialization|default:"Specialist" }}</div>
+          <div class="d-flex gap-2 flex-wrap mt-2">
+            <span class="chip chip-primary"><i class="bi bi-award"></i>{{ doctor.experience_years }} years experience</span>
+            {% if doctor.department_name %}<span class="chip"><i class="bi bi-hospital"></i>{{ doctor.department_name }}</span>{% endif %}
+            {% if doctor.city %}<span class="chip"><i class="bi bi-geo-alt"></i>{{ doctor.city }}</span>{% endif %}
+          </div>
+        </div>
+        <a href="/patient/book/{{ doctor.id }}/" class="btn btn-primary btn-lg {% if not doctor.is_available %}disabled{% endif %}"><i class="bi bi-calendar-plus me-1"></i>Book Appointment</a>
+      </div>
+    </div>
+    <div class="card-x mb-4">
+      <div class="card-x-header"><h2>About</h2></div>
+      <div class="card-x-body">
+        <p class="mb-4">{{ doctor.bio|default:"No biography provided yet."|linebreaksbr }}</p>
+        <div class="kv">
+          <div><span>Qualification</span><strong>{{ doctor.qualification|default:"—" }}</strong></div>
+          <div><span>Consultation fee</span><strong>{{ CURRENCY }}{{ doctor.consultation_fee }}</strong></div>
+          <div><span>Visit duration</span><strong>{{ doctor.consultation_duration }} min</strong></div>
+          <div><span>Doctor ID</span><strong>{{ doctor.doctor_code }}</strong></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-x">
+      <div class="card-x-header"><h2>Available time slots</h2><span class="small text-muted">Next 14 days</span></div>
+      <div class="card-x-body">
+        {% include "partials/slot_picker.html" with doctor_id=doctor.id %}
+        <div class="text-end mt-3"><a href="/patient/book/{{ doctor.id }}/" class="btn btn-primary" data-book-with-slot>Continue to booking <i class="bi bi-arrow-right ms-1"></i></a></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card-x sticky-summary">
+      <div class="card-x-header"><h2>Weekly schedule</h2></div>
+      <div class="card-x-body">
+        {% if doctor.schedule %}
+        <ul class="info-list">
+          {% for w in doctor.schedule %}
+          <li class="justify-content-between"><span class="fw-semibold text-dark">{{ w.day }}</span><span>{{ w.start }} – {{ w.end }}</span></li>
+          {% endfor %}
+        </ul>
+        {% else %}<p class="text-muted small mb-0">This doctor hasn't published a schedule yet.</p>{% endif %}
+        <hr>
+        <div class="d-flex gap-2 align-items-center small text-muted"><i class="bi bi-info-circle"></i>Times shown in clinic local time.</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/appointments.js' %}"></script>{% endblock %}

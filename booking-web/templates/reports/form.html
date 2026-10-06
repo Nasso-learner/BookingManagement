@@ -1,0 +1,94 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}{% if pk %}Edit report{% else %}New report{% endif %}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="breadcrumb-x"><a href="/reports/">Reports</a><i class="bi bi-chevron-right small"></i><span>{% if pk %}{{ report.title }}{% else %}New{% endif %}</span></div>
+    <h1>{% if pk %}Edit report{% else %}New report{% endif %}</h1>
+    <p>Write a SELECT query, pick a chart, preview, save.</p>
+  </div>
+</div>
+
+<form method="post" id="reportForm" data-loading>
+  {% csrf_token %}
+  <div class="row g-4">
+    <div class="col-xl-5">
+      <div class="card-x mb-4">
+        <div class="card-x-header"><h2>Query</h2></div>
+        <div class="card-x-body d-grid gap-3">
+          <div><label class="form-label" for="title">Title</label>
+            <input class="form-control {% if errors.title %}is-invalid{% endif %}" id="title" name="title" value="{{ report.title|default:'' }}" required maxlength="150">
+            <div class="invalid-feedback">{{ errors.title }}</div></div>
+          <div><label class="form-label" for="description">Description</label>
+            <input class="form-control" id="description" name="description" value="{{ report.description|default:'' }}" maxlength="300"></div>
+          <div>
+            <div class="d-flex justify-content-between"><label class="form-label" for="sql">SQL</label><span class="small text-muted">Ctrl+Enter to preview</span></div>
+            <textarea class="form-control font-monospace {% if errors.sql %}is-invalid{% endif %}" id="sql" name="sql" rows="11" spellcheck="false" style="font-size:.82rem"
+              placeholder="SELECT status, COUNT(*) AS appointments&#10;FROM reporting.appointments&#10;WHERE (:doctor_id IS NULL OR doctor_id = :doctor_id)&#10;GROUP BY 1">{{ report.sql|default:'' }}</textarea>
+            <div class="invalid-feedback">{{ errors.sql }}</div>
+          </div>
+          <details class="small">
+            <summary class="fw-semibold text-muted" style="cursor:pointer">Available views &amp; rules</summary>
+            <ul class="mt-2 mb-0 text-muted ps-3">
+              <li><code>reporting.appointments</code>: appointment_date, start_hour, weekday, status, booking_source, doctor_id, doctor_name, specialization, department_name, consultation_fee, patient_id, patient_code, lead_days, created_at…</li>
+              <li><code>reporting.doctor_capacity</code>: doctor_id, doctor_name, department_name, weekly_slots</li>
+              <li><code>reporting.patients</code>: patient_id, gender, blood_group, city, created_at</li>
+              <li><code>reporting.audit_activity</code>: action, user_role, created_at (admin-only reports)</li>
+              <li>One <code>SELECT</code>/<code>WITH</code> statement, read-only, 5s timeout, max 2,000 rows.</li>
+              <li>To share with doctors, filter with <code>(:doctor_id IS NULL OR doctor_id = :doctor_id)</code>. Admins see all rows, and each doctor sees only their own.</li>
+            </ul>
+          </details>
+        </div>
+      </div>
+
+      <div class="card-x mb-4">
+        <div class="card-x-header"><h2>Chart</h2></div>
+        <div class="card-x-body row g-3">
+          <div class="col-12"><label class="form-label" for="chart_type">Chart type</label>
+            <select class="form-select" id="chart_type" name="chart_type">{% for v, l in chart_types %}<option value="{{ v }}" {% if report.chart_type == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+          <div class="col-md-6"><label class="form-label" for="x_column">X / category column</label>
+            <input class="form-control" id="x_column" name="x_column" list="colList" value="{{ report.x_column|default:'' }}" placeholder="first column"></div>
+          <div class="col-md-6"><label class="form-label" for="y_columns">Value column(s)</label>
+            <input class="form-control" id="y_columns" name="y_columns" list="colList" value="{{ report.y_columns|default:'' }}" placeholder="second column"></div>
+          <div class="col-12"><label class="form-label" for="series_column">Split into series by <span class="text-muted fw-normal">(optional)</span></label>
+            <input class="form-control" id="series_column" name="series_column" list="colList" value="{{ report.series_column|default:'' }}" placeholder="e.g. status"></div>
+          <datalist id="colList"></datalist>
+          <div class="col-12 d-grid gap-2">
+            <div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="doctor_access" name="doctor_access" {% if report.doctor_access %}checked{% endif %}>
+              <label class="form-check-label fw-semibold" for="doctor_access">Visible to doctors (each sees only their own data)</label></div>
+            <div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="is_active" name="is_active" {% if report.is_active %}checked{% endif %}>
+              <label class="form-check-label fw-semibold" for="is_active">Active</label></div>
+          </div>
+        </div>
+      </div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-primary btn-lg flex-fill" type="submit"><i class="bi bi-check2 me-1"></i>Save report</button>
+        <a href="{% if pk %}/reports/{{ pk }}/{% else %}/reports/{% endif %}" class="btn btn-light btn-lg">Cancel</a>
+      </div>
+    </div>
+
+    <div class="col-xl-7">
+      <div class="card-x sticky-summary">
+        <div class="card-x-header flex-wrap">
+          <h2>Preview</h2>
+          <div class="d-flex gap-2 align-items-center">
+            <select class="form-select form-select-sm" id="previewAs" style="width:auto" aria-label="Preview as">
+              <option value="">As admin (all data)</option>
+              {% for d in doctors %}<option value="{{ d.id }}">As Dr. {{ d.full_name }}</option>{% endfor %}
+            </select>
+            <button type="button" class="btn btn-soft btn-sm" id="previewBtn"><i class="bi bi-play-fill me-1"></i>Run preview</button>
+          </div>
+        </div>
+        <div class="card-x-body" id="previewArea">
+          <div class="empty py-5"><div class="empty-icon"><i class="bi bi-graph-up"></i></div><p class="small mb-0">Run a preview to see the chart and data.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js"></script>
+<script src="{% static 'js/reports.js' %}"></script>
+{% endblock %}

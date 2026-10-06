@@ -1,0 +1,28 @@
+{% extends "base/base.html" %}
+{% load ui %}
+{% block title %}My patients{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>My patients</h1><p>Everyone who has booked with you.</p></div></div>
+<div class="card-x">
+  <div class="card-x-header">
+    <span class="small text-muted"><strong class="text-dark">{{ pager.count }}</strong> patient{{ pager.count|pluralize }}</span>
+    <form method="get" class="input-icon" style="min-width:260px"><i class="bi bi-search"></i>
+      <input class="form-control form-control-sm" name="q" value="{{ request.GET.q }}" placeholder="Name, email, phone or code" aria-label="Search patients"></form>
+  </div>
+  {% if patients %}
+  <div class="table-responsive"><table class="table table-x">
+    <thead><tr><th>Patient</th><th>Contact</th><th>Gender / Blood</th><th>Visits</th><th>Last visit</th><th></th></tr></thead>
+    <tbody>{% for p in patients %}
+      <tr>
+        <td data-label="Patient"><div class="person">{% if p.profile_image %}<img class="avatar avatar-sm" src="{{ p.profile_image|media }}" alt="">{% else %}<span class="avatar avatar-sm">{{ p.full_name|initials }}</span>{% endif %}<div><div class="cell-title">{{ p.full_name }}</div><div class="cell-sub">{{ p.patient_code }}</div></div></div></td>
+        <td data-label="Contact"><div>{{ p.email }}</div><div class="cell-sub">{{ p.phone_number|default:"—" }}</div></td>
+        <td data-label="Gender / Blood">{{ p.gender|title|default:"—" }} · {{ p.blood_group|default:"—" }}</td>
+        <td data-label="Visits"><span class="chip chip-primary">{{ p.appointments_count }}</span></td>
+        <td data-label="Last visit">{{ p.last_visit|as_date|date:"d M Y"|default:"—" }}</td>
+        <td data-label="" class="text-end"><a class="btn btn-sm btn-light" href="/doctor/appointments/?view=all&q={{ p.patient_code|urlencode }}">History</a></td>
+      </tr>{% endfor %}</tbody>
+  </table></div>
+  {% include "partials/pagination.html" %}
+  {% else %}<div class="empty"><div class="empty-icon"><i class="bi bi-people"></i></div><h3>No patients yet</h3><p class="small mb-0">Patients appear here after their first booking with you.</p></div>{% endif %}
+</div>
+{% endblock %}

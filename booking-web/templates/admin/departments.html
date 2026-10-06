@@ -1,0 +1,49 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}Departments{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Departments</h1><p>Organise doctors into clinical departments.</p></div>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#deptModal" data-dept='{"id":""}'><i class="bi bi-plus-lg me-1"></i>Add Department</button>
+</div>
+<div class="card-x">
+  <form method="get" class="card-x-header"><span class="small text-muted"><strong class="text-dark">{{ pager.count }}</strong> departments</span>
+    <div class="input-icon" style="min-width:240px"><i class="bi bi-search"></i><input class="form-control form-control-sm" name="q" value="{{ request.GET.q }}" placeholder="Search" aria-label="Search departments"></div></form>
+  {% if departments %}
+  <div class="table-responsive"><table class="table table-x">
+    <thead><tr><th>Department</th><th>Code</th><th>Description</th><th>Doctors</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+    <tbody>{% for dp in departments %}
+      <tr>
+        <td data-label="Department" class="cell-title">{{ dp.name }}</td>
+        <td data-label="Code"><span class="chip">{{ dp.code }}</span></td>
+        <td data-label="Description"><span class="d-inline-block text-truncate text-muted" style="max-width:280px">{{ dp.description|default:"—" }}</span></td>
+        <td data-label="Doctors">{{ dp.doctor_count }}</td>
+        <td data-label="Status">{% if dp.is_active %}<span class="status status-completed">Active</span>{% else %}<span class="status status-no_show">Inactive</span>{% endif %}</td>
+        <td data-label="" class="text-end"><div class="d-inline-flex gap-1">
+          <button class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#deptModal" title="Edit"
+                  data-dept='{"id":"{{ dp.id }}","name":"{{ dp.name|escapejs }}","code":"{{ dp.code|escapejs }}","description":"{{ dp.description|escapejs }}","is_active":{{ dp.is_active|yesno:"true,false" }}}'><i class="bi bi-pencil"></i></button>
+          <form method="post" data-loading data-confirm="Delete {{ dp.name }}? Departments with doctors can't be deleted — deactivate them instead.">{% csrf_token %}
+            <input type="hidden" name="op" value="delete"><input type="hidden" name="id" value="{{ dp.id }}"><button class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash3"></i></button></form>
+        </div></td>
+      </tr>{% endfor %}</tbody>
+  </table></div>
+  {% include "partials/pagination.html" %}
+  {% else %}<div class="empty"><div class="empty-icon"><i class="bi bi-diagram-3"></i></div><h3>No departments yet</h3></div>{% endif %}
+</div>
+
+<div class="modal fade" id="deptModal" tabindex="-1" aria-labelledby="deptTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content" method="post" data-loading>{% csrf_token %}<input type="hidden" name="op" value="save"><input type="hidden" name="id">
+      <div class="modal-header"><h2 class="h5 mb-0" id="deptTitle">Department</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+      <div class="modal-body row g-3">
+        <div class="col-8"><label class="form-label" for="dName">Name</label><input class="form-control" id="dName" name="name" required></div>
+        <div class="col-4"><label class="form-label" for="dCode">Code</label><input class="form-control text-uppercase" id="dCode" name="code" maxlength="20" required></div>
+        <div class="col-12"><label class="form-label" for="dDesc">Description</label><textarea class="form-control" id="dDesc" name="description" rows="3"></textarea></div>
+        <div class="col-12"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="dActive" name="is_active" checked><label class="form-check-label fw-semibold" for="dActive">Active</label></div></div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary">Save department</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/availability.js' %}"></script>{% endblock %}

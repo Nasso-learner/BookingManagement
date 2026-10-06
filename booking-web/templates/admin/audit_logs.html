@@ -1,0 +1,30 @@
+{% extends "base/base.html" %}
+{% load ui %}
+{% block title %}Audit logs{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Audit activity</h1><p>Security-relevant actions across the platform.</p></div></div>
+<div class="card-x">
+  <form method="get" class="card-x-header flex-wrap">
+    <select name="action" class="form-select form-select-sm" style="width:auto" onchange="this.form.submit()" aria-label="Action">
+      <option value="">All actions</option>
+      {% for a in actions %}<option {% if f.action == a %}selected{% endif %}>{{ a }}</option>{% endfor %}
+    </select>
+    <div class="input-icon" style="min-width:260px"><i class="bi bi-search"></i><input class="form-control form-control-sm" name="q" value="{{ f.q|default:'' }}" placeholder="Description, user email or object id" aria-label="Search"></div>
+  </form>
+  {% if logs %}
+  <div class="table-responsive"><table class="table table-x">
+    <thead><tr><th>When</th><th>User</th><th>Action</th><th>Object</th><th>Description</th><th>IP</th></tr></thead>
+    <tbody>{% for l in logs %}
+      <tr>
+        <td data-label="When" class="text-nowrap"><div class="cell-title">{{ l.created_at|as_datetime|date:"d M Y" }}</div><div class="cell-sub">{{ l.created_at|as_datetime|time:"h:i:s A" }}</div></td>
+        <td data-label="User">{% if l.user_email %}<div class="cell-title">{{ l.user_name }}</div><div class="cell-sub">{{ l.user_email }}</div>{% else %}<span class="text-muted">System</span>{% endif %}</td>
+        <td data-label="Action"><span class="chip chip-primary">{{ l.action }}</span></td>
+        <td data-label="Object" class="small">{{ l.model_name|default:"—" }}{% if l.object_id %} #{{ l.object_id }}{% endif %}</td>
+        <td data-label="Description" class="small" style="max-width:360px">{{ l.description }}</td>
+        <td data-label="IP" class="small text-muted">{{ l.ip_address|default:"—" }}</td>
+      </tr>{% endfor %}</tbody>
+  </table></div>
+  {% include "partials/pagination.html" %}
+  {% else %}<div class="empty"><div class="empty-icon"><i class="bi bi-shield-check"></i></div><h3>No activity found</h3></div>{% endif %}
+</div>
+{% endblock %}

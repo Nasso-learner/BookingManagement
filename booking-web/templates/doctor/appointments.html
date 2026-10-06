@@ -1,0 +1,60 @@
+{% extends "base/base.html" %}
+{% load ui %}
+{% block title %}Appointments{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>Appointments</h1><p>Confirm, complete and manage your patient visits.</p></div></div>
+<div class="card-x">
+  <div class="card-x-header flex-wrap">
+    <nav class="segmented" aria-label="View">
+      <a href="?view=upcoming" class="{% if view == 'upcoming' and not f.date %}active{% endif %}">Upcoming</a>
+      <a href="?view=today&date={% now 'Y-m-d' %}" class="{% if view == 'today' %}active{% endif %}">Today</a>
+      <a href="?view=all" class="{% if view == 'all' %}active{% endif %}">All</a>
+    </nav>
+    <form method="get" class="d-flex gap-2 flex-wrap">
+      <input type="hidden" name="view" value="{% if f.date %}date{% else %}{{ view }}{% endif %}">
+      <select name="status" class="form-select form-select-sm" style="width:auto" aria-label="Status" onchange="this.form.submit()">
+        <option value="">All statuses</option>
+        {% for s, l in statuses %}<option value="{{ s }}" {% if f.status == s %}selected{% endif %}>{{ l }}</option>{% endfor %}
+      </select>
+      <input type="date" name="date" value="{{ f.date|default:'' }}" class="form-control form-control-sm" style="width:auto" aria-label="Date" onchange="this.form.submit()">
+      <div class="input-icon"><i class="bi bi-search"></i><input class="form-control form-control-sm" name="q" value="{{ f.q|default:'' }}" placeholder="Patient or number" aria-label="Search"></div>
+    </form>
+  </div>
+  {% if appointments %}
+  <div class="table-responsive">
+    <table class="table table-x">
+      <thead><tr><th>Appointment #</th><th>Patient</th><th>Date</th><th>Time</th><th>Status</th><th>Reason</th><th class="text-end">Actions</th></tr></thead>
+      <tbody>
+      {% for a in appointments %}
+      <tr>
+        <td data-label="Appointment #"><a class="cell-title" href="/doctor/appointments/{{ a.id }}/">{{ a.appointment_number }}</a></td>
+        <td data-label="Patient"><div class="person"><span class="avatar avatar-sm">{{ a.patient.name|initials }}</span><div><div class="cell-title">{{ a.patient.name }}</div><div class="cell-sub">{{ a.patient.patient_code }}</div></div></div></td>
+        <td data-label="Date" class="cell-title">{{ a.appointment_date|as_date|date:"d M Y" }}</td>
+        <td data-label="Time">{{ a.start_time|as_time|time:"h:i A" }}</td>
+        <td data-label="Status"><span class="status status-{{ a.status|lower }}">{{ a.status_display }}</span></td>
+        <td data-label="Reason"><span class="d-inline-block text-truncate" style="max-width:200px" title="{{ a.reason }}">{{ a.reason }}</span></td>
+        <td data-label="" class="text-end">
+          <div class="d-inline-flex gap-1">
+            <a href="/doctor/appointments/{{ a.id }}/" class="btn btn-sm btn-light">View</a>
+            {% if a.status == "PENDING" %}
+            <form method="post" action="/doctor/appointments/{{ a.id }}/confirm/" data-loading>{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="btn btn-sm btn-soft" title="Confirm"><i class="bi bi-check2"></i></button></form>
+            {% endif %}
+            {% if a.status == "PENDING" or a.status == "CONFIRMED" %}
+            <form method="post" action="/doctor/appointments/{{ a.id }}/complete/" data-loading data-confirm="Mark {{ a.appointment_number }} as completed?">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="btn btn-sm btn-light" title="Complete"><i class="bi bi-clipboard2-check"></i></button></form>
+            <form method="post" action="/doctor/appointments/{{ a.id }}/no_show/" data-loading data-confirm="Mark {{ a.appointment_number }} as no-show?">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="btn btn-sm btn-light" title="No-show"><i class="bi bi-person-x"></i></button></form>
+            <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal" data-cancel-url="/doctor/appointments/{{ a.id }}/cancel/" data-cancel-number="{{ a.appointment_number }}" title="Cancel"><i class="bi bi-x-lg"></i></button>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "partials/pagination.html" %}
+  {% else %}
+  <div class="empty"><div class="empty-icon"><i class="bi bi-calendar2"></i></div><h3>No appointments found</h3><p class="small mb-0">Try another filter.</p></div>
+  {% endif %}
+</div>
+{% include "partials/cancel_modal.html" %}
+{% endblock %}

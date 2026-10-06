@@ -1,0 +1,33 @@
+<aside class="sidebar" id="sidebar" aria-label="Main navigation">
+  <a href="{{ me.dashboard }}" class="brand">
+    <span class="brand-mark"><i class="bi bi-heart-pulse-fill"></i></span>
+    <span>MediBook<small>Care, on schedule</small></span>
+  </a>
+  <div class="nav-section small-caps">{{ me.role|title }} menu</div>
+  <ul class="side-nav">
+    {% for item in nav %}
+    <li><a href="{{ item.url }}" class="{% if item.active %}active{% endif %}" {% if item.active %}aria-current="page"{% endif %}>
+      <i class="bi {{ item.icon }}"></i>{{ item.label }}</a></li>
+    {% endfor %}
+  </ul>
+  {% if me.role == "PATIENT" %}
+  <div class="sidebar-card">
+    <strong>Need a consultation?</strong>
+    <p>Find the right specialist and book in under a minute.</p>
+    <a href="/patient/doctors/" class="btn btn-sm w-100"><i class="bi bi-plus-lg me-1"></i>Book appointment</a>
+  </div>
+  {% elif me.role == "DOCTOR" %}
+  <div class="sidebar-card">
+    <strong>Keep your calendar fresh</strong>
+    <p>Patients can only book the hours you publish.</p>
+    <a href="/doctor/availability/" class="btn btn-sm w-100"><i class="bi bi-clock me-1"></i>Manage availability</a>
+  </div>
+  {% else %}
+  <div class="sidebar-card">
+    <strong>Admin console</strong>
+    <p>Every change you make is recorded in the audit log.</p>
+    <a href="/admin/audit-logs/" class="btn btn-sm w-100"><i class="bi bi-shield-check me-1"></i>View activity</a>
+  </div>
+  {% endif %}
+</aside>
+<div class="sidebar-backdrop" data-sidebar-close></div>

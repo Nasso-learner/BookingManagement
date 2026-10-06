@@ -1,0 +1,56 @@
+{% extends "base/base.html" %}
+{% load ui %}
+{% block title %}My profile{% endblock %}
+{% block content %}
+<div class="page-header"><div><h1>My profile</h1><p>Keep your details current so your doctor has what they need.</p></div></div>
+<form method="post" enctype="multipart/form-data" data-loading>
+  {% csrf_token %}
+  <div class="row g-4">
+    <div class="col-lg-4">
+      <div class="card-x text-center">
+        <div class="card-x-body">
+          {% if p.profile_image %}<img class="avatar avatar-xl mb-3" src="{{ p.profile_image|media }}" alt="" data-preview>{% else %}<span class="avatar avatar-xl mb-3" data-preview>{{ p.full_name|initials }}</span>{% endif %}
+          <h2 class="h5 mb-0">{{ p.full_name }}</h2>
+          <div class="text-muted small">{{ p.email }}</div>
+          <span class="chip chip-primary mt-2">{{ p.patient_code }}</span>
+          <label class="btn btn-light btn-sm w-100 mt-3"><i class="bi bi-camera me-1"></i>Change photo
+            <input type="file" name="profile_image" accept="image/*" class="d-none" data-preview-input></label>
+          {% if errors.profile_image %}<div class="text-danger small mt-2">{{ errors.profile_image }}</div>{% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-8">
+      <div class="card-x mb-4">
+        <div class="card-x-header"><h2>Personal information</h2></div>
+        <div class="card-x-body row g-3">
+          {% include "partials/field.html" with name="first_name" label="First name" value=p.first_name col="col-md-6" %}
+          {% include "partials/field.html" with name="last_name" label="Last name" value=p.last_name col="col-md-6" %}
+          {% include "partials/field.html" with name="phone_number" label="Phone" value=p.phone_number col="col-md-6" type="tel" %}
+          {% include "partials/field.html" with name="date_of_birth" label="Date of birth" value=p.date_of_birth col="col-md-6" type="date" %}
+          <div class="col-md-6"><label class="form-label" for="gender">Gender</label>
+            <select class="form-select" id="gender" name="gender"><option value="">Prefer not to say</option>
+              {% for v, l in genders %}<option value="{{ v }}" {% if p.gender == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+          <div class="col-md-6"><label class="form-label" for="blood_group">Blood group</label>
+            <select class="form-select" id="blood_group" name="blood_group"><option value="">Unknown</option>
+              {% for b in blood_groups %}<option {% if p.blood_group == b %}selected{% endif %}>{{ b }}</option>{% endfor %}</select></div>
+        </div>
+      </div>
+      <div class="card-x mb-4">
+        <div class="card-x-header"><h2>Address</h2></div>
+        <div class="card-x-body row g-3">
+          <div class="col-12"><label class="form-label" for="address">Address</label><textarea class="form-control" id="address" name="address" rows="2">{{ p.address }}</textarea></div>
+          {% include "partials/field.html" with name="city" label="City" value=p.city col="col-md-6" %}
+        </div>
+      </div>
+      <div class="card-x mb-4">
+        <div class="card-x-header"><h2>Emergency contact</h2></div>
+        <div class="card-x-body row g-3">
+          {% include "partials/field.html" with name="emergency_contact_name" label="Contact name" value=p.emergency_contact_name col="col-md-6" %}
+          {% include "partials/field.html" with name="emergency_contact_phone" label="Contact phone" value=p.emergency_contact_phone col="col-md-6" type="tel" %}
+        </div>
+      </div>
+      <div class="text-end"><button class="btn btn-primary btn-lg" type="submit"><i class="bi bi-check2 me-1"></i>Save changes</button></div>
+    </div>
+  </div>
+</form>
+{% endblock %}

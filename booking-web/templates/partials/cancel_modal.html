@@ -1,0 +1,22 @@
+{# One modal per page; buttons set the form action via data-cancel-url (see main.js). #}
+<div class="modal fade" id="cancelModal" tabindex="-1" aria-labelledby="cancelModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content" method="post" data-loading id="cancelForm">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <div class="modal-body text-center pt-4">
+        <div class="modal-icon tone-red mx-auto mb-3"><i class="bi bi-calendar-x"></i></div>
+        <h2 class="h5" id="cancelModalTitle">Cancel appointment?</h2>
+        <p class="text-muted small mb-3">Are you sure you want to cancel <strong class="text-dark" data-cancel-number>this appointment</strong>? This can't be undone.</p>
+        <div class="text-start">
+          <label class="form-label" for="cancelReason">Reason for cancellation</label>
+          <textarea class="form-control" id="cancelReason" name="reason" rows="3" required minlength="3" placeholder="Let the other party know why…"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer justify-content-center border-0 pt-0 pb-4 gap-2">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Keep appointment</button>
+        <button type="submit" class="btn btn-danger"><i class="bi bi-x-circle me-1"></i>Cancel Appointment</button>
+      </div>
+    </form>
+  </div>
+</div>

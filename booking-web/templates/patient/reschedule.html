@@ -1,0 +1,45 @@
+{% extends "base/base.html" %}
+{% load ui static %}
+{% block title %}Reschedule {{ appt.appointment_number }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="breadcrumb-x"><a href="{{ back_url }}">{{ appt.appointment_number }}</a><i class="bi bi-chevron-right small"></i><span>Reschedule</span></div>
+    <h1>Reschedule appointment</h1><p>Your current booking is kept in history and replaced by the new time.</p>
+  </div>
+</div>
+<div class="row g-4">
+  <div class="col-lg-8">
+    <form method="post" class="card-x" data-loading>
+      {% csrf_token %}
+      <div class="card-x-body">
+        {% include "partials/slot_picker.html" with doctor_id=appt.doctor.id %}
+        {% if errors.start_time or errors.appointment_date %}<div class="alert alert-danger small mt-3 mb-0">{% firstof errors.start_time errors.appointment_date %}</div>{% endif %}
+        <div class="mt-4">
+          <label class="form-label" for="reason">Reason for rescheduling</label>
+          <textarea class="form-control {% if errors.reason %}is-invalid{% endif %}" id="reason" name="reason" rows="3" required placeholder="e.g. Work conflict on the original date">{{ form.reason }}</textarea>
+          <div class="invalid-feedback">{{ errors.reason }}</div>
+        </div>
+      </div>
+      <div class="card-x-body border-top d-flex justify-content-between">
+        <a href="{{ back_url }}" class="btn btn-light">Back</a>
+        <button class="btn btn-primary" type="submit"><i class="bi bi-arrow-repeat me-1"></i>Confirm new time</button>
+      </div>
+    </form>
+  </div>
+  <div class="col-lg-4">
+    <div class="card-x sticky-summary">
+      <div class="card-x-header"><h2>Current booking</h2><span class="status status-{{ appt.status|lower }}">{{ appt.status_display }}</span></div>
+      <div class="card-x-body">
+        <div class="summary-row"><span>Doctor</span><strong>Dr. {{ appt.doctor.name }}</strong></div>
+        <div class="summary-row"><span>Patient</span><strong>{{ appt.patient.name }}</strong></div>
+        <div class="summary-row"><span>Date</span><strong class="text-decoration-line-through text-muted">{{ appt.appointment_date|as_date|date:"d M Y" }}</strong></div>
+        <div class="summary-row"><span>Time</span><strong class="text-decoration-line-through text-muted">{{ appt.start_time|as_time|time:"h:i A" }}</strong></div>
+        <div class="summary-row"><span>New date</span><strong data-review="date" class="text-primary">—</strong></div>
+        <div class="summary-row"><span>New time</span><strong data-review="time" class="text-primary">—</strong></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/appointments.js' %}"></script>{% endblock %}

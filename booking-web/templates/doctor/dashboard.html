@@ -1,0 +1,74 @@
+{% extends "base/base.html" %}
+{% load ui static %}
+{% block title %}Doctor dashboard{% endblock %}
+{% block content %}
+<section class="hero mb-4 fade-up">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 position-relative" style="z-index:1">
+    <div>
+      <h1 class="h2 mb-2">Good day, Dr. {{ me.name }}</h1>
+      <p class="mb-0">You have <strong class="text-white">{{ d.today_count }}</strong> appointment{{ d.today_count|pluralize }} today and {{ d.upcoming_count }} upcoming.</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="/doctor/appointments/?view=today&date={% now 'Y-m-d' %}" class="btn btn-light"><i class="bi bi-calendar-day me-1"></i>Today's list</a>
+      <a href="/doctor/availability/" class="btn btn-ghost"><i class="bi bi-clock me-1"></i>Availability</a>
+    </div>
+  </div>
+</section>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-4 col-xl-2 fade-up"><div class="card-x stat"><span class="stat-icon tone-primary"><i class="bi bi-calendar-day"></i></span><div><div class="stat-value" data-count="{{ d.today_count }}">{{ d.today_count }}</div><div class="stat-label">Today</div></div></div></div>
+  <div class="col-6 col-md-4 col-xl-2 fade-up"><div class="card-x stat"><span class="stat-icon tone-blue"><i class="bi bi-calendar-week"></i></span><div><div class="stat-value" data-count="{{ d.upcoming_count }}">{{ d.upcoming_count }}</div><div class="stat-label">Upcoming</div></div></div></div>
+  <div class="col-6 col-md-4 col-xl-2 fade-up"><div class="card-x stat"><span class="stat-icon tone-green"><i class="bi bi-check2-circle"></i></span><div><div class="stat-value" data-count="{{ d.counts.completed }}">{{ d.counts.completed }}</div><div class="stat-label">Completed</div></div></div></div>
+  <div class="col-6 col-md-4 col-xl-2 fade-up"><div class="card-x stat"><span class="stat-icon tone-red"><i class="bi bi-x-circle"></i></span><div><div class="stat-value" data-count="{{ d.counts.cancelled }}">{{ d.counts.cancelled }}</div><div class="stat-label">Cancelled</div></div></div></div>
+  <div class="col-6 col-md-4 col-xl-2 fade-up"><div class="card-x stat"><span class="stat-icon tone-slate"><i class="bi bi-person-x"></i></span><div><div class="stat-value" data-count="{{ d.counts.no_show }}">{{ d.counts.no_show }}</div><div class="stat-label">No-show</div></div></div></div>
+  <div class="col-6 col-md-4 col-xl-2 fade-up"><div class="card-x stat"><span class="stat-icon tone-purple"><i class="bi bi-people"></i></span><div><div class="stat-value" data-count="{{ d.total_patients }}">{{ d.total_patients }}</div><div class="stat-label">Patients</div></div></div></div>
+</div>
+
+<div class="row g-4">
+  <div class="col-xl-8">
+    <div class="card-x mb-4">
+      <div class="card-x-header"><h2><i class="bi bi-clock-history text-primary me-2"></i>Today's schedule</h2><span class="chip">{% now "D, d M" %}</span></div>
+      <div class="card-x-body py-2">
+        {% if d.today_schedule %}
+        <ul class="timeline">
+          {% for a in d.today_schedule %}
+          <li><div class="t-time">{{ a.start_time|as_time|time:"h:i" }}<small>{{ a.start_time|as_time|time:"A" }}</small></div>
+            <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+              <div class="person"><span class="avatar avatar-sm">{{ a.patient.name|initials }}</span><div><div class="cell-title">{{ a.patient.name }}</div><div class="cell-sub text-truncate" style="max-width:280px">{{ a.reason }}</div></div></div>
+              <div class="d-flex gap-2 align-items-center"><span class="status status-{{ a.status|lower }}">{{ a.status_display }}</span><a href="/doctor/appointments/{{ a.id }}/" class="btn btn-sm btn-light">Open</a></div>
+            </div></li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <div class="empty"><div class="empty-icon"><i class="bi bi-cup-hot"></i></div><h3>No appointments today</h3><p class="small mb-0">Enjoy the breather.</p></div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="card-x">
+      <div class="card-x-header"><h2>Upcoming appointments</h2><a href="/doctor/appointments/" class="small fw-semibold">View all <i class="bi bi-arrow-right"></i></a></div>
+      {% if d.upcoming_appointments %}
+      <div class="table-responsive"><table class="table table-x">
+        <thead><tr><th>Patient</th><th>Date</th><th>Time</th><th>Status</th><th></th></tr></thead>
+        <tbody>{% for a in d.upcoming_appointments %}
+          <tr><td data-label="Patient"><div class="cell-title">{{ a.patient.name }}</div><div class="cell-sub">{{ a.appointment_number }}</div></td>
+            <td data-label="Date">{{ a.appointment_date|as_date|date:"D, d M" }}</td><td data-label="Time">{{ a.start_time|as_time|time:"h:i A" }}</td>
+            <td data-label="Status"><span class="status status-{{ a.status|lower }}">{{ a.status_display }}</span></td>
+            <td data-label="" class="text-end"><a href="/doctor/appointments/{{ a.id }}/" class="btn btn-sm btn-light">Open</a></td></tr>
+        {% endfor %}</tbody></table></div>
+      {% else %}<div class="empty"><h3>Nothing upcoming</h3><p class="small mb-0">New bookings will appear here.</p></div>{% endif %}
+    </div>
+  </div>
+  <div class="col-xl-4">
+    <div class="card-x">
+      <div class="card-x-header"><h2>Quick actions</h2></div>
+      <div class="card-x-body d-grid gap-2">
+        <a class="quick-action" href="/doctor/availability/"><span class="stat-icon tone-primary"><i class="bi bi-clock-history"></i></span>Manage Availability<i class="bi bi-arrow-right"></i></a>
+        <a class="quick-action" href="/doctor/appointments/"><span class="stat-icon tone-blue"><i class="bi bi-calendar2-check"></i></span>View Appointments<i class="bi bi-arrow-right"></i></a>
+        <a class="quick-action" href="/doctor/patients/"><span class="stat-icon tone-purple"><i class="bi bi-people"></i></span>My Patients<i class="bi bi-arrow-right"></i></a>
+        <a class="quick-action" href="/doctor/profile/"><span class="stat-icon tone-amber"><i class="bi bi-person-badge"></i></span>Edit Profile<i class="bi bi-arrow-right"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/dashboard.js' %}"></script>{% endblock %}

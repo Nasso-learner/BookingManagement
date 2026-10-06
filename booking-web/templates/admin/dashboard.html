@@ -1,0 +1,77 @@
+{% extends "base/base.html" %}
+{% load ui static %}
+{% block title %}Admin dashboard{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Overview</h1><p>Clinic-wide activity at a glance.</p></div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="/admin/doctors/new/" class="btn btn-primary"><i class="bi bi-person-plus me-1"></i>Add Doctor</a>
+    <a href="/admin/departments/" class="btn btn-light"><i class="bi bi-diagram-3 me-1"></i>Add Department</a>
+  </div>
+</div>
+
+{% if d.pending_doctors %}
+<div class="alert d-flex align-items-center gap-3 mb-4" style="background:var(--warning-50);color:var(--warning);border:1px solid #fde68a;border-radius:14px">
+  <i class="bi bi-hourglass-split fs-5"></i>
+  <div class="flex-grow-1 small fw-semibold">{{ d.pending_doctors }} doctor account{{ d.pending_doctors|pluralize }} awaiting approval.</div>
+  <a href="/admin/doctors/?is_active=0" class="btn btn-sm btn-light">Review</a>
+</div>
+{% endif %}
+
+<div class="row g-3 mb-3">
+  <div class="col-6 col-xl-3 fade-up"><div class="card-x stat"><span class="stat-icon tone-primary"><i class="bi bi-heart-pulse"></i></span><div><div class="stat-value" data-count="{{ d.total_doctors }}">{{ d.total_doctors }}</div><div class="stat-label">Total doctors</div></div></div></div>
+  <div class="col-6 col-xl-3 fade-up"><div class="card-x stat"><span class="stat-icon tone-purple"><i class="bi bi-people"></i></span><div><div class="stat-value" data-count="{{ d.total_patients }}">{{ d.total_patients }}</div><div class="stat-label">Total patients</div></div></div></div>
+  <div class="col-6 col-xl-3 fade-up"><div class="card-x stat"><span class="stat-icon tone-blue"><i class="bi bi-calendar2-week"></i></span><div><div class="stat-value" data-count="{{ d.counts.total }}">{{ d.counts.total }}</div><div class="stat-label">Total appointments</div></div></div></div>
+  <div class="col-6 col-xl-3 fade-up"><div class="card-x stat"><span class="stat-icon tone-slate"><i class="bi bi-calendar-day"></i></span><div><div class="stat-value" data-count="{{ d.today_count }}">{{ d.today_count }}</div><div class="stat-label">Today's appointments</div></div></div></div>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3 fade-up"><a href="/admin/appointments/?status=PENDING" class="card-x stat hover-lift"><span class="stat-icon tone-amber"><i class="bi bi-hourglass"></i></span><div><div class="stat-value" data-count="{{ d.counts.pending }}">{{ d.counts.pending }}</div><div class="stat-label">Pending</div></div></a></div>
+  <div class="col-6 col-xl-3 fade-up"><a href="/admin/appointments/?status=CONFIRMED" class="card-x stat hover-lift"><span class="stat-icon tone-blue"><i class="bi bi-patch-check"></i></span><div><div class="stat-value" data-count="{{ d.counts.confirmed }}">{{ d.counts.confirmed }}</div><div class="stat-label">Confirmed</div></div></a></div>
+  <div class="col-6 col-xl-3 fade-up"><a href="/admin/appointments/?status=COMPLETED" class="card-x stat hover-lift"><span class="stat-icon tone-green"><i class="bi bi-check2-circle"></i></span><div><div class="stat-value" data-count="{{ d.counts.completed }}">{{ d.counts.completed }}</div><div class="stat-label">Completed</div></div></a></div>
+  <div class="col-6 col-xl-3 fade-up"><a href="/admin/appointments/?status=CANCELLED" class="card-x stat hover-lift"><span class="stat-icon tone-red"><i class="bi bi-x-circle"></i></span><div><div class="stat-value" data-count="{{ d.counts.cancelled }}">{{ d.counts.cancelled }}</div><div class="stat-label">Cancelled</div></div></a></div>
+</div>
+
+<div class="row g-4">
+  <div class="col-xl-8">
+    <div class="card-x">
+      <div class="card-x-header"><h2>Recent bookings</h2><a href="/admin/appointments/" class="small fw-semibold">Manage all <i class="bi bi-arrow-right"></i></a></div>
+      {% if d.recent_appointments %}
+      <div class="table-responsive"><table class="table table-x">
+        <thead><tr><th>Appointment</th><th>Patient</th><th>Doctor</th><th>When</th><th>Status</th></tr></thead>
+        <tbody>{% for a in d.recent_appointments %}
+          <tr>
+            <td data-label="Appointment"><a href="/admin/appointments/{{ a.id }}/" class="cell-title">{{ a.appointment_number }}</a><div class="cell-sub">{{ a.booking_source|title }}</div></td>
+            <td data-label="Patient">{{ a.patient.name }}</td>
+            <td data-label="Doctor"><div>Dr. {{ a.doctor.name }}</div><div class="cell-sub">{{ a.department.name|default:"" }}</div></td>
+            <td data-label="When"><div class="cell-title">{{ a.appointment_date|as_date|date:"d M" }}</div><div class="cell-sub">{{ a.start_time|as_time|time:"h:i A" }}</div></td>
+            <td data-label="Status"><span class="status status-{{ a.status|lower }}">{{ a.status_display }}</span></td>
+          </tr>{% endfor %}</tbody>
+      </table></div>
+      {% else %}<div class="empty"><h3>No bookings yet</h3></div>{% endif %}
+    </div>
+  </div>
+  <div class="col-xl-4">
+    <div class="card-x mb-4">
+      <div class="card-x-header"><h2>Quick actions</h2></div>
+      <div class="card-x-body d-grid gap-2">
+        <a class="quick-action" href="/admin/doctors/new/"><span class="stat-icon tone-primary"><i class="bi bi-person-plus"></i></span>Add Doctor<i class="bi bi-arrow-right"></i></a>
+        <a class="quick-action" href="/admin/departments/"><span class="stat-icon tone-purple"><i class="bi bi-diagram-3"></i></span>Add Department<i class="bi bi-arrow-right"></i></a>
+        <a class="quick-action" href="/admin/doctors/"><span class="stat-icon tone-blue"><i class="bi bi-heart-pulse"></i></span>Manage Doctors<i class="bi bi-arrow-right"></i></a>
+        <a class="quick-action" href="/admin/patients/"><span class="stat-icon tone-amber"><i class="bi bi-people"></i></span>Manage Patients<i class="bi bi-arrow-right"></i></a>
+        <a class="quick-action" href="/admin/appointments/"><span class="stat-icon tone-green"><i class="bi bi-calendar2-check"></i></span>Manage Appointments<i class="bi bi-arrow-right"></i></a>
+      </div>
+    </div>
+    <div class="card-x">
+      <div class="card-x-header"><h2>Today</h2><span class="chip">{% now "d M" %}</span></div>
+      <div class="card-x-body py-2">
+        {% if d.today_schedule %}<ul class="timeline">{% for a in d.today_schedule %}
+          <li><div class="t-time">{{ a.start_time|as_time|time:"h:i" }}<small>{{ a.start_time|as_time|time:"A" }}</small></div>
+            <div><a class="cell-title" href="/admin/appointments/{{ a.id }}/">{{ a.patient.name }}</a><div class="cell-sub">Dr. {{ a.doctor.name }} · <span class="status status-{{ a.status|lower }} py-0">{{ a.status_display }}</span></div></div></li>
+        {% endfor %}</ul>
+        {% else %}<p class="text-muted small my-3">No appointments today.</p>{% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/dashboard.js' %}"></script>{% endblock %}

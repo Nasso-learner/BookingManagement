@@ -1,0 +1,103 @@
+{% extends "base/base.html" %}
+{% load ui static %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<section class="hero mb-4 fade-up">
+  <div class="row g-4 align-items-center">
+    <div class="col-lg-7">
+      <span class="chip" style="background:rgba(255,255,255,.16);color:#fff"><i class="bi bi-sun"></i>Good to see you</span>
+      <h1 class="h2 mt-3 mb-2">Welcome back, {{ me.name }} 👋</h1>
+      <p class="mb-4">{% if d.today_appointments %}You have {{ d.today_appointments|length }} appointment{{ d.today_appointments|length|pluralize }} today.{% else %}No appointments today. Take care of yourself!{% endif %}</p>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="/patient/doctors/" class="btn btn-light"><i class="bi bi-plus-lg me-1"></i>Book Appointment</a>
+        <a href="/patient/appointments/" class="btn btn-ghost">View Appointments</a>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="hero-next">
+        <div class="small text-uppercase fw-bold" style="letter-spacing:.08em;opacity:.8">Next appointment</div>
+        {% with n=d.next_appointment %}
+        {% if n %}
+          <div class="d-flex gap-3 align-items-center mt-2">
+            <div class="text-center px-3 py-2 rounded-3" style="background:rgba(255,255,255,.18)">
+              <div class="small fw-bold">{{ n.appointment_date|as_date|date:"M" }}</div>
+              <div class="h3 mb-0 text-white">{{ n.appointment_date|as_date|date:"d" }}</div>
+            </div>
+            <div>
+              <div class="fw-bold">Dr. {{ n.doctor.name }}</div>
+              <div class="small" style="opacity:.85">{{ n.doctor.specialization }} · {{ n.start_time|as_time|time:"h:i A" }}</div>
+              <a href="/patient/appointments/{{ n.id }}/" class="small text-white fw-semibold">View details <i class="bi bi-arrow-right"></i></a>
+            </div>
+          </div>
+        {% else %}
+          <p class="mt-2 mb-0 small">Nothing scheduled yet. Find a doctor and book your first visit.</p>
+        {% endif %}
+        {% endwith %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3 fade-up"><div class="card-x stat"><span class="stat-icon tone-primary"><i class="bi bi-calendar2-week"></i></span><div><div class="stat-value" data-count="{{ d.counts.total }}">{{ d.counts.total }}</div><div class="stat-label">Total appointments</div></div></div></div>
+  <div class="col-6 col-xl-3 fade-up"><div class="card-x stat"><span class="stat-icon tone-blue"><i class="bi bi-calendar-day"></i></span><div><div class="stat-value" data-count="{{ d.today_count }}">{{ d.today_count }}</div><div class="stat-label">Today</div></div></div></div>
+  <div class="col-6 col-xl-3 fade-up"><div class="card-x stat"><span class="stat-icon tone-green"><i class="bi bi-check2-circle"></i></span><div><div class="stat-value" data-count="{{ d.counts.completed }}">{{ d.counts.completed }}</div><div class="stat-label">Completed</div></div></div></div>
+  <div class="col-6 col-xl-3 fade-up"><div class="card-x stat"><span class="stat-icon tone-red"><i class="bi bi-x-circle"></i></span><div><div class="stat-value" data-count="{{ d.counts.cancelled }}">{{ d.counts.cancelled }}</div><div class="stat-label">Cancelled</div></div></div></div>
+</div>
+
+<div class="row g-4">
+  <div class="col-xl-8">
+    {% if d.today_appointments %}
+    <div class="card-x mb-4">
+      <div class="card-x-header"><h2><i class="bi bi-calendar-day text-primary me-2"></i>Today's appointments</h2></div>
+      <div class="card-x-body py-2">
+        <ul class="timeline">
+          {% for a in d.today_appointments %}
+          <li><div class="t-time">{{ a.start_time|as_time|time:"h:i" }}<small>{{ a.start_time|as_time|time:"A" }}</small></div>
+            <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+              <div><div class="cell-title">Dr. {{ a.doctor.name }}</div><div class="cell-sub">{{ a.doctor.specialization }}</div></div>
+              <div class="d-flex gap-2 align-items-center"><span class="status status-{{ a.status|lower }}">{{ a.status_display }}</span><a href="/patient/appointments/{{ a.id }}/" class="btn btn-sm btn-light">View</a></div>
+            </div></li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    {% endif %}
+    <div class="card-x">
+      <div class="card-x-header"><h2>Recent appointments</h2><a href="/patient/appointments/?tab=all" class="small fw-semibold">View all <i class="bi bi-arrow-right"></i></a></div>
+      {% if d.recent_appointments %}
+      <div class="table-responsive">
+        <table class="table table-x">
+          <thead><tr><th>Appointment</th><th>Doctor</th><th>Date &amp; time</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+          {% for a in d.recent_appointments %}
+            <tr>
+              <td data-label="Appointment"><span class="cell-title">{{ a.appointment_number }}</span></td>
+              <td data-label="Doctor"><div class="cell-title">Dr. {{ a.doctor.name }}</div><div class="cell-sub">{{ a.department.name|default:a.doctor.specialization }}</div></td>
+              <td data-label="Date"><div class="cell-title">{{ a.appointment_date|as_date|date:"d M Y" }}</div><div class="cell-sub">{{ a.start_time|as_time|time:"h:i A" }}</div></td>
+              <td data-label="Status"><span class="status status-{{ a.status|lower }}">{{ a.status_display }}</span></td>
+              <td data-label="" class="text-end"><a href="/patient/appointments/{{ a.id }}/" class="btn btn-sm btn-light">View</a></td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty"><div class="empty-icon"><i class="bi bi-calendar-plus"></i></div><h3>No appointments yet</h3><p class="small">Your bookings will show up here.</p><a href="/patient/doctors/" class="btn btn-primary btn-sm">Find a doctor</a></div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="col-xl-4">
+    <div class="card-x">
+      <div class="card-x-header"><h2>Quick actions</h2></div>
+      <div class="card-x-body d-grid gap-2">
+        <a class="quick-action" href="/patient/doctors/"><span class="stat-icon tone-primary"><i class="bi bi-calendar-plus"></i></span>Book Appointment<i class="bi bi-arrow-right"></i></a>
+        <a class="quick-action" href="/patient/appointments/"><span class="stat-icon tone-blue"><i class="bi bi-list-check"></i></span>View Appointments<i class="bi bi-arrow-right"></i></a>
+        <a class="quick-action" href="/patient/doctors/"><span class="stat-icon tone-purple"><i class="bi bi-search-heart"></i></span>Find Doctor<i class="bi bi-arrow-right"></i></a>
+        <a class="quick-action" href="/patient/profile/"><span class="stat-icon tone-amber"><i class="bi bi-person-gear"></i></span>Edit Profile<i class="bi bi-arrow-right"></i></a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/dashboard.js' %}"></script>{% endblock %}

@@ -1,0 +1,72 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}Create account{% endblock %}
+{% block body %}
+<div class="auth">
+  {% include "auth/_aside.html" %}
+  <main class="auth-main">
+    <div class="auth-card fade-up" style="max-width:480px">
+      <h1>Create your account</h1>
+      <p class="sub">It takes less than a minute.</p>
+      {% if errors.detail or errors.non_field_errors %}<div class="alert alert-danger py-2 small">{% firstof errors.detail errors.non_field_errors %}</div>{% endif %}
+      <form method="post" novalidate data-loading>
+        {% csrf_token %}
+        <div class="mb-3">
+          <span class="form-label d-block">I am a</span>
+          <div class="role-pick">
+            <input type="radio" name="role" id="rolePatient" value="PATIENT" {% if form.role != "DOCTOR" %}checked{% endif %}>
+            <label for="rolePatient"><i class="bi bi-person-heart"></i><div><strong>Patient</strong><span>Book appointments</span></div></label>
+            <input type="radio" name="role" id="roleDoctor" value="DOCTOR" {% if form.role == "DOCTOR" %}checked{% endif %}>
+            <label for="roleDoctor"><i class="bi bi-clipboard2-pulse"></i><div><strong>Doctor</strong><span>Needs admin approval</span></div></label>
+          </div>
+        </div>
+        <div class="row g-3 mb-3">
+          <div class="col-6">
+            <label class="form-label" for="first_name">First name</label>
+            <input class="form-control {% if errors.first_name %}is-invalid{% endif %}" id="first_name" name="first_name" value="{{ form.first_name }}" autocomplete="given-name" required>
+            <div class="invalid-feedback">{{ errors.first_name }}</div>
+          </div>
+          <div class="col-6">
+            <label class="form-label" for="last_name">Last name</label>
+            <input class="form-control {% if errors.last_name %}is-invalid{% endif %}" id="last_name" name="last_name" value="{{ form.last_name }}" autocomplete="family-name" required>
+            <div class="invalid-feedback">{{ errors.last_name }}</div>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="email">Email</label>
+          <div class="input-icon"><i class="bi bi-envelope"></i>
+            <input class="form-control {% if errors.email %}is-invalid{% endif %}" type="email" id="email" name="email" value="{{ form.email }}" autocomplete="email" required>
+            <div class="invalid-feedback">{{ errors.email }}</div>
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="phone_number">Phone</label>
+          <div class="input-icon"><i class="bi bi-telephone"></i>
+            <input class="form-control {% if errors.phone_number %}is-invalid{% endif %}" type="tel" id="phone_number" name="phone_number" value="{{ form.phone_number }}" autocomplete="tel" placeholder="+91 98xxx xxxxx">
+            <div class="invalid-feedback">{{ errors.phone_number }}</div>
+          </div>
+        </div>
+        <div class="row g-3 mb-4">
+          <div class="col-sm-6">
+            <label class="form-label" for="password">Password</label>
+            <div class="position-relative">
+              <input class="form-control {% if errors.password %}is-invalid{% endif %}" type="password" id="password" name="password" autocomplete="new-password" data-pw-meter required>
+              <button type="button" class="pw-toggle" data-pw-toggle="password" aria-label="Show password"><i class="bi bi-eye"></i></button>
+            </div>
+            <div class="pw-meter"><span></span></div>
+            {% if errors.password %}<div class="invalid-feedback d-block">{{ errors.password }}</div>{% endif %}
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label" for="confirm_password">Confirm password</label>
+            <input class="form-control {% if errors.confirm_password %}is-invalid{% endif %}" type="password" id="confirm_password" name="confirm_password" autocomplete="new-password" data-pw-confirm="password" required>
+            <div class="invalid-feedback">{{ errors.confirm_password|default:"Passwords do not match." }}</div>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-lg w-100" type="submit">Create account</button>
+      </form>
+      <p class="text-center text-muted small mt-4 mb-0">Already have an account? <a href="/login/" class="fw-semibold">Sign in</a></p>
+    </div>
+  </main>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/auth.js' %}"></script>{% endblock %}

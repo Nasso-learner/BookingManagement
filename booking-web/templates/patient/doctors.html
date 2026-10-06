@@ -1,0 +1,82 @@
+{% extends "base/base.html" %}
+{% load ui %}
+{% block title %}Find a doctor{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Find a doctor</h1><p>Search by name, specialty, department or city and book instantly.</p></div>
+</div>
+
+<form method="get" class="card-x p-3 mb-4">
+  <div class="row g-2 align-items-center">
+    <div class="col-lg">
+      <div class="input-icon"><i class="bi bi-search"></i>
+        <input class="form-control" name="q" value="{{ f.q|default:'' }}" placeholder="Search doctor, specialization, department or city…" aria-label="Search doctors">
+      </div>
+    </div>
+    <div class="col-auto"><button class="btn btn-primary"><i class="bi bi-search me-1"></i>Search</button></div>
+    <div class="col-auto d-xl-none"><button class="btn btn-light" type="button" data-bs-toggle="collapse" data-bs-target="#filters"><i class="bi bi-sliders"></i> Filters</button></div>
+  </div>
+</form>
+
+<div class="row g-4">
+  <div class="col-xl-3">
+    <form method="get" id="filters" class="collapse d-xl-block card-x filter-panel">
+      <input type="hidden" name="q" value="{{ f.q|default:'' }}">
+      <div class="card-x-header"><h3>Filters</h3><a href="/patient/doctors/" class="small fw-semibold">Reset</a></div>
+      <div class="card-x-body d-grid gap-3">
+        <div><label class="form-label" for="fSpec">Specialization</label>
+          <select class="form-select" id="fSpec" name="specialization"><option value="">All specializations</option>
+            {% for s in options.specializations %}<option {% if f.specialization == s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select></div>
+        <div><label class="form-label" for="fDept">Department</label>
+          <select class="form-select" id="fDept" name="department"><option value="">All departments</option>
+            {% for dp in departments %}<option value="{{ dp.id }}" {% if f.department == dp.id|stringformat:"s" %}selected{% endif %}>{{ dp.name }}</option>{% endfor %}</select></div>
+        <div><label class="form-label" for="fCity">City</label>
+          <select class="form-select" id="fCity" name="city"><option value="">All cities</option>
+            {% for c in options.cities %}<option {% if f.city == c %}selected{% endif %}>{{ c }}</option>{% endfor %}</select></div>
+        <div><span class="form-label d-block">Consultation fee ({{ CURRENCY }})</span>
+          <div class="d-flex gap-2"><input class="form-control" type="number" min="0" name="min_fee" value="{{ f.min_fee|default:'' }}" placeholder="Min" aria-label="Minimum fee">
+            <input class="form-control" type="number" min="0" name="max_fee" value="{{ f.max_fee|default:'' }}" placeholder="Max" aria-label="Maximum fee"></div></div>
+        <div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="fAvail" name="available" value="1" {% if f.available %}checked{% endif %}>
+          <label class="form-check-label small fw-semibold" for="fAvail">Available for booking only</label></div>
+        <button class="btn btn-primary w-100">Apply filters</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="col-xl-9">
+    <div class="d-flex justify-content-between align-items-center mb-3"><span class="text-muted small"><strong class="text-dark">{{ pager.count }}</strong> doctor{{ pager.count|pluralize }} found</span></div>
+    {% if doctors %}
+    <div class="row g-3">
+      {% for doc in doctors %}
+      <div class="col-md-6 col-xxl-4 fade-up">
+        <article class="card-x doctor-card hover-lift">
+          <div class="doc-top">
+            {% if doc.profile_image %}<img class="avatar avatar-lg" src="{{ doc.profile_image|media }}" alt="Dr. {{ doc.full_name }}">{% else %}<span class="avatar avatar-lg">{{ doc.full_name|initials }}</span>{% endif %}
+            <div class="min-w-0">
+              <h3 class="doc-name">Dr. {{ doc.full_name }}</h3>
+              <div class="doc-spec">{{ doc.specialization|default:"Specialist" }}</div>
+              <span class="avail-dot mt-1 {% if not doc.is_available or not doc.available_days %}off{% endif %}">{% if doc.is_available and doc.available_days %}Available{% else %}Unavailable{% endif %}</span>
+            </div>
+          </div>
+          <div class="doc-meta">
+            <div>Experience<strong>{{ doc.experience_years }} yrs</strong></div>
+            <div>Fee<strong>{{ CURRENCY }}{{ doc.consultation_fee|floatformat:0 }}</strong></div>
+            <div>Department<strong class="text-truncate">{{ doc.department_name|default:"—" }}</strong></div>
+            <div>City<strong>{{ doc.city|default:"—" }}</strong></div>
+          </div>
+          {% if doc.available_days %}<div class="d-flex gap-1 flex-wrap mb-3">{% for day in doc.available_days %}<span class="chip">{{ day|slice:":3" }}</span>{% endfor %}</div>{% endif %}
+          <div class="d-flex gap-2 mt-auto">
+            <a href="/patient/doctors/{{ doc.id }}/" class="btn btn-light flex-fill">View Profile</a>
+            <a href="/patient/book/{{ doc.id }}/" class="btn btn-primary flex-fill {% if not doc.is_available %}disabled{% endif %}">Book</a>
+          </div>
+        </article>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="card-x mt-3">{% include "partials/pagination.html" %}</div>
+    {% else %}
+    <div class="card-x empty"><div class="empty-icon"><i class="bi bi-search"></i></div><h3>No doctors match your search</h3><p class="small">Try a different keyword or clear some filters.</p><a href="/patient/doctors/" class="btn btn-light btn-sm">Clear filters</a></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

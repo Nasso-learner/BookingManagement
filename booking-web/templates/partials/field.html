@@ -1,0 +1,5 @@
+{% load ui %}<div class="{{ col|default:'col-12' }}">
+  <label class="form-label" for="f_{{ name }}">{{ label }}</label>
+  <input class="form-control {% if errors|get:name %}is-invalid{% endif %}" id="f_{{ name }}" name="{{ name }}" type="{{ type|default:'text' }}" value="{{ value|default_if_none:'' }}" {% if step %}step="{{ step }}"{% endif %} {% if required %}required{% endif %}>
+  <div class="invalid-feedback">{{ errors|get:name }}</div>
+</div>

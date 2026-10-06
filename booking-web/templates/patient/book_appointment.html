@@ -1,0 +1,124 @@
+{% extends "base/base.html" %}
+{% load ui static %}
+{% block title %}Book appointment{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <div class="breadcrumb-x"><a href="/patient/doctors/">Doctors</a><i class="bi bi-chevron-right small"></i><a href="/patient/doctors/{{ doctor.id }}/">Dr. {{ doctor.full_name }}</a><i class="bi bi-chevron-right small"></i><span>Book</span></div>
+    <h1>Book appointment</h1><p>Six quick steps. Your slot is held only once you confirm.</p>
+  </div>
+</div>
+
+<form method="post" id="bookingForm" data-slot-picker data-doctor="{{ doctor.id }}" data-fee="{{ CURRENCY }}{{ doctor.consultation_fee }}"
+      data-start-step="{% if errors.appointment_date or errors.start_time %}2{% elif errors.reason %}4{% elif form.appointment_date %}3{% else %}1{% endif %}" novalidate>
+  {% csrf_token %}
+  <input type="hidden" name="appointment_date" value="{{ form.appointment_date }}">
+  <input type="hidden" name="start_time" value="{{ form.start_time }}">
+
+  <div class="card-x p-3 mb-4">
+    <div class="stepper" aria-label="Booking progress">
+      <div class="step" data-step-ind="1"><div class="bar"></div><span class="label">Doctor</span></div>
+      <div class="step" data-step-ind="2"><div class="bar"></div><span class="label">Date</span></div>
+      <div class="step" data-step-ind="3"><div class="bar"></div><span class="label">Time slot</span></div>
+      <div class="step" data-step-ind="4"><div class="bar"></div><span class="label">Reason</span></div>
+      <div class="step" data-step-ind="5"><div class="bar"></div><span class="label">Review</span></div>
+      <div class="step" data-step-ind="6"><div class="bar"></div><span class="label">Confirm</span></div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="card-x">
+        <div class="card-x-body p-4">
+          <!-- 1. Doctor -->
+          <section class="step-panel" data-step="1">
+            <h2 class="h5 mb-3">Selected doctor</h2>
+            <div class="person p-3 rounded-4 border mb-3">
+              {% if doctor.profile_image %}<img class="avatar avatar-lg" src="{{ doctor.profile_image|media }}" alt="">{% else %}<span class="avatar avatar-lg">{{ doctor.full_name|initials }}</span>{% endif %}
+              <div class="flex-grow-1"><div class="p-name fs-5">Dr. {{ doctor.full_name }}</div><div class="p-sub">{{ doctor.specialization }} · {{ doctor.department_name|default:"" }}</div>
+                <div class="p-sub">{{ doctor.experience_years }} yrs experience · {{ CURRENCY }}{{ doctor.consultation_fee }}</div></div>
+              <a href="/patient/doctors/" class="btn btn-sm btn-light">Change</a>
+            </div>
+          </section>
+          <!-- 2. Date -->
+          <section class="step-panel" data-step="2">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+              <h2 class="h5 mb-0">Select a date</h2>
+              <input type="date" class="form-control form-control-sm" style="max-width:170px" data-date-input min="{% now 'Y-m-d' %}" aria-label="Pick any date">
+            </div>
+            <div class="date-strip">
+              {% for d in dates %}
+              <button type="button" class="date-chip {% if not d.free %}disabled{% endif %}" data-date="{{ d.date }}">
+                <div class="dow">{{ d.weekday }}</div><div class="dom">{{ d.date|as_date|date:"d" }}</div>
+                <div class="free">{% if d.free %}{{ d.free }} slots{% else %}Full / off{% endif %}</div>
+              </button>
+              {% endfor %}
+            </div>
+            {% if errors.appointment_date %}<div class="text-danger small mt-2">{{ errors.appointment_date }}</div>{% endif %}
+          </section>
+          <!-- 3. Slot -->
+          <section class="step-panel" data-step="3">
+            <h2 class="h5 mb-1">Available slots</h2>
+            <p class="text-muted small" data-slot-date></p>
+            <div data-slot-area></div>
+            {% if errors.start_time %}<div class="alert alert-danger small mt-3 mb-0">{{ errors.start_time }}</div>{% endif %}
+          </section>
+          <!-- 4. Reason -->
+          <section class="step-panel" data-step="4">
+            <h2 class="h5 mb-3">Reason for visit</h2>
+            <div class="mb-3">
+              <label class="form-label" for="reason">Appointment reason</label>
+              <textarea class="form-control {% if errors.reason %}is-invalid{% endif %}" id="reason" name="reason" rows="4" maxlength="2000" required placeholder="e.g. Chest discomfort during exercise for the past week">{{ form.reason }}</textarea>
+              <div class="invalid-feedback">{{ errors.reason|default:"Please describe the reason for your visit." }}</div>
+            </div>
+            <div>
+              <label class="form-label" for="patient_notes">Notes for the doctor <span class="text-muted fw-normal">(optional)</span></label>
+              <textarea class="form-control" id="patient_notes" name="patient_notes" rows="3" maxlength="2000" placeholder="Current medication, allergies, previous reports…">{{ form.patient_notes }}</textarea>
+            </div>
+          </section>
+          <!-- 5. Review -->
+          <section class="step-panel" data-step="5">
+            <h2 class="h5 mb-3">Review your appointment</h2>
+            <div class="summary-row"><span>Doctor</span><strong>Dr. {{ doctor.full_name }}<br><small class="text-muted fw-normal">{{ doctor.specialization }}</small></strong></div>
+            <div class="summary-row"><span>Date</span><strong data-review="date">—</strong></div>
+            <div class="summary-row"><span>Time</span><strong data-review="time">—</strong></div>
+            <div class="summary-row"><span>Reason</span><strong data-review="reason" style="max-width:65%;white-space:pre-line">—</strong></div>
+            <div class="summary-row"><span>Consultation fee</span><strong>{{ CURRENCY }}{{ doctor.consultation_fee }}</strong></div>
+          </section>
+          <!-- 6. Confirm -->
+          <section class="step-panel" data-step="6">
+            <div class="text-center py-3">
+              <div class="modal-icon tone-primary mx-auto mb-3"><i class="bi bi-calendar2-check"></i></div>
+              <h2 class="h5">Ready to confirm?</h2>
+              <p class="text-muted small mb-4">Dr. {{ doctor.full_name }} · <span data-review="date"></span> at <span data-review="time"></span></p>
+              <div class="form-check d-inline-flex gap-2 text-start mb-2">
+                <input class="form-check-input" type="checkbox" id="agree" required>
+                <label class="form-check-label small" for="agree">I'll arrive 10 minutes early and cancel at least 2 hours ahead if I can't make it.</label>
+              </div>
+            </div>
+          </section>
+
+          <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+            <button type="button" class="btn btn-light" data-step-prev><i class="bi bi-arrow-left me-1"></i>Back</button>
+            <button type="button" class="btn btn-primary" data-step-next>Continue <i class="bi bi-arrow-right ms-1"></i></button>
+            <button type="submit" class="btn btn-primary d-none" data-step-submit><i class="bi bi-check2-circle me-1"></i>Confirm Booking</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <aside class="card-x sticky-summary">
+        <div class="card-x-header"><h2>Booking summary</h2></div>
+        <div class="card-x-body">
+          <div class="summary-row"><span>Doctor</span><strong>Dr. {{ doctor.full_name }}</strong></div>
+          <div class="summary-row"><span>Date</span><strong data-review="date">Not selected</strong></div>
+          <div class="summary-row"><span>Time</span><strong data-review="time">Not selected</strong></div>
+          <div class="summary-row"><span>Fee</span><strong>{{ CURRENCY }}{{ doctor.consultation_fee }}</strong></div>
+          <div class="small text-muted mt-3"><i class="bi bi-shield-check text-primary me-1"></i>Slots are checked in real time. If someone books first, we'll let you pick another.</div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</form>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/appointments.js' %}"></script>{% endblock %}

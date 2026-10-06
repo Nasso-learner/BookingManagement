@@ -1,0 +1,43 @@
+{% extends "base/base.html" %}
+{% load ui %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Reports</h1>
+    <p>{% if me.role == "ADMIN" %}SQL-driven charts. Mark a report “visible to doctors” to share it, and each doctor sees only their own data.{% else %}Reports shared with you, filtered to your own patients and appointments.{% endif %}</p>
+  </div>
+  {% if me.role == "ADMIN" %}<a href="/reports/new/" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>New report</a>{% endif %}
+</div>
+
+{% if reports %}
+<div class="row g-3">
+  {% for r in reports %}
+  <div class="col-md-6 col-xl-4 fade-up">
+    <a href="/reports/{{ r.id }}/" class="card-x hover-lift d-flex flex-column h-100 p-3 text-reset">
+      <div class="d-flex align-items-start gap-3">
+        <span class="stat-icon tone-primary"><i class="bi {% if r.chart_type == 'TABLE' %}bi-table{% elif r.chart_type == 'NUMBER' %}bi-123{% elif r.chart_type == 'PIE' %}bi-pie-chart{% elif r.chart_type == 'LINE' or r.chart_type == 'AREA' %}bi-graph-up{% elif r.chart_type == 'SCATTER' %}bi-diagram-2{% else %}bi-bar-chart{% endif %}"></i></span>
+        <div class="min-w-0 flex-grow-1">
+          <div class="cell-title">{{ r.title }}</div>
+          <div class="cell-sub">{{ r.description|default:"—" }}</div>
+        </div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap mt-3">
+        <span class="chip">{{ r.chart_type_display }}</span>
+        {% if me.role == "ADMIN" %}
+          {% if r.doctor_access %}<span class="chip chip-primary"><i class="bi bi-people"></i>Doctors</span>{% else %}<span class="chip"><i class="bi bi-shield-lock"></i>Admin only</span>{% endif %}
+          {% if not r.is_active %}<span class="status status-no_show">Inactive</span>{% endif %}
+        {% endif %}
+      </div>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card-x empty">
+  <div class="empty-icon"><i class="bi bi-graph-up-arrow"></i></div>
+  <h3>No reports yet</h3>
+  {% if me.role == "ADMIN" %}<a href="/reports/new/" class="btn btn-primary btn-sm">Create the first report</a>{% else %}<p class="small mb-0">Your administrator hasn't shared any reports yet.</p>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends "base/base.html" %}
+{% load ui static %}
+{% block title %}My appointments{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>My appointments</h1><p>Track, reschedule or cancel your visits.</p></div>
+  <a href="/patient/doctors/" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Book Appointment</a>
+</div>
+
+<div class="card-x">
+  <div class="card-x-header flex-wrap">
+    <nav class="segmented" aria-label="Filter appointments">
+      <a href="?tab=upcoming" class="{% if tab == 'upcoming' %}active{% endif %}">Upcoming</a>
+      <a href="?tab=past" class="{% if tab == 'past' %}active{% endif %}">Past</a>
+      <a href="?tab=cancelled" class="{% if tab == 'cancelled' %}active{% endif %}">Cancelled</a>
+      <a href="?tab=all" class="{% if tab == 'all' %}active{% endif %}">All</a>
+    </nav>
+    <form method="get" class="input-icon" style="min-width:240px"><i class="bi bi-search"></i>
+      <input type="hidden" name="tab" value="{{ tab }}">
+      <input class="form-control form-control-sm" name="q" value="{{ request.GET.q }}" placeholder="Search number or doctor" aria-label="Search appointments">
+    </form>
+  </div>
+  {% if appointments %}
+  <div class="table-responsive">
+    <table class="table table-x">
+      <thead><tr><th>Appointment #</th><th>Doctor</th><th>Department</th><th>Date</th><th>Time</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+      <tbody>
+      {% for a in appointments %}
+        <tr>
+          <td data-label="Appointment #"><a class="cell-title" href="/patient/appointments/{{ a.id }}/">{{ a.appointment_number }}</a></td>
+          <td data-label="Doctor"><div class="d-flex align-items-center gap-2">
+            {% if a.doctor.profile_image %}<img class="avatar avatar-sm" src="{{ a.doctor.profile_image|media }}" alt="">{% else %}<span class="avatar avatar-sm">{{ a.doctor.name|initials }}</span>{% endif %}
+            <div><div class="cell-title">Dr. {{ a.doctor.name }}</div><div class="cell-sub">{{ a.doctor.specialization }}</div></div></div></td>
+          <td data-label="Department">{{ a.department.name|default:"—" }}</td>
+          <td data-label="Date" class="cell-title">{{ a.appointment_date|as_date|date:"d M Y" }}</td>
+          <td data-label="Time">{{ a.start_time|as_time|time:"h:i A" }}</td>
+          <td data-label="Status"><span class="status status-{{ a.status|lower }}">{{ a.status_display }}</span></td>
+          <td data-label="" class="text-end">
+            <div class="d-inline-flex gap-1">
+              <a href="/patient/appointments/{{ a.id }}/" class="btn btn-sm btn-light">View</a>
+              {% if a.status == "PENDING" or a.status == "CONFIRMED" %}
+              <a href="/patient/appointments/{{ a.id }}/reschedule/" class="btn btn-sm btn-light" title="Reschedule"><i class="bi bi-arrow-repeat"></i></a>
+              <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal" data-cancel-url="/patient/appointments/{{ a.id }}/cancel/" data-cancel-number="{{ a.appointment_number }}" title="Cancel"><i class="bi bi-x-lg"></i></button>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "partials/pagination.html" %}
+  {% else %}
+  <div class="empty"><div class="empty-icon"><i class="bi bi-calendar2-x"></i></div><h3>No {{ tab }} appointments</h3><p class="small">When you book a visit it will appear here.</p><a href="/patient/doctors/" class="btn btn-primary btn-sm">Find a doctor</a></div>
+  {% endif %}
+</div>
+{% include "partials/cancel_modal.html" %}
+{% endblock %}

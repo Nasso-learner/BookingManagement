@@ -1,0 +1,36 @@
+{% extends "base/base.html" %}
+{% block title %}Analytics{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Analytics</h1>
+    <p>{% if me.role == "ADMIN" %}Clinic-wide trends, doctor performance and utilisation.{% else %}Your appointments, outcomes and schedule utilisation.{% endif %}</p>
+  </div>
+  {% if embed %}<a href="{{ request.path }}" class="btn btn-light"><i class="bi bi-arrow-clockwise me-1"></i>Refresh</a>{% endif %}
+</div>
+
+{% if embed %}
+<div class="card-x overflow-hidden position-relative" style="min-height:70vh">
+  <div class="position-absolute top-50 start-50 translate-middle text-center text-muted" id="analyticsLoading">
+    <div class="spinner-ring mx-auto mb-2"></div><span class="small">Loading dashboard…</span>
+  </div>
+  <iframe src="{{ embed.url }}" title="Analytics dashboard" class="d-block w-100 border-0 position-relative"
+          style="height:calc(100vh - 210px);min-height:900px;background:transparent"
+          onload="document.getElementById('analyticsLoading').remove()"></iframe>
+</div>
+{% else %}
+<div class="card-x">
+  <div class="empty">
+    <div class="empty-icon"><i class="bi bi-bar-chart-line"></i></div>
+    <h3>Analytics isn't available yet</h3>
+    <p class="small mb-3">{{ error }}</p>
+    {% if me.role == "ADMIN" %}
+    <p class="small text-muted mb-0">Follow <code>booking-api/metabase/README.md</code> to start Metabase, publish the dashboards and add the
+      <code>METABASE_*</code> settings to <code>booking-api/.env</code>, then restart the API.</p>
+    {% else %}
+    <p class="small text-muted mb-0">Please ask your administrator to enable analytics.</p>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

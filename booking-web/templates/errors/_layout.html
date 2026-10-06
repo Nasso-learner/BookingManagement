@@ -1,0 +1,14 @@
+{% extends "base/base.html" %}
+{% block body %}
+<main class="error-page">
+  <div class="fade-up" style="max-width:480px">
+    <div class="error-code">{% block code %}{% endblock %}</div>
+    <h1 class="h3 mt-3">{% block heading %}{% endblock %}</h1>
+    <p class="text-muted mb-4">{% if message %}{{ message }}{% else %}{% block text %}{% endblock %}{% endif %}</p>
+    <div class="d-flex gap-2 justify-content-center flex-wrap">
+      <a href="javascript:history.back()" class="btn btn-light"><i class="bi bi-arrow-left me-1"></i>Go back</a>
+      <a href="{% if me %}{{ me.dashboard }}{% else %}/login/{% endif %}" class="btn btn-primary"><i class="bi bi-house me-1"></i>{% if me %}Dashboard{% else %}Sign in{% endif %}</a>
+    </div>
+  </div>
+</main>
+{% endblock %}

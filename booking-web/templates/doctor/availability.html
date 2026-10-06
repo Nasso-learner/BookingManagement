@@ -1,0 +1,89 @@
+{% extends "base/base.html" %}
+{% load ui static %}
+{% block title %}{% if admin_mode %}Doctor schedules{% else %}Availability{% endif %}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>{% if admin_mode %}Doctor schedules{% else %}Manage availability{% endif %}</h1>
+    <p>Weekly hours patients can book. Overlapping hours on the same day aren't allowed.</p>
+  </div>
+  {% if week is not None %}<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSchedule"><i class="bi bi-plus-lg me-1"></i>Add schedule</button>{% endif %}
+</div>
+
+{% if admin_mode %}
+<form method="get" class="card-x p-3 mb-4 d-flex gap-2 align-items-center flex-wrap">
+  <label class="form-label mb-0" for="doctorSel">Doctor</label>
+  <select class="form-select" id="doctorSel" name="doctor" style="max-width:360px" onchange="this.form.submit()">
+    <option value="">Select a doctor…</option>
+    {% for doc in doctors %}<option value="{{ doc.id }}" {% if selected_doctor == doc.id|stringformat:"s" %}selected{% endif %}>Dr. {{ doc.full_name }} — {{ doc.specialization|default:doc.doctor_code }}</option>{% endfor %}
+  </select>
+</form>
+{% endif %}
+
+{% if week is None %}
+<div class="card-x empty"><div class="empty-icon"><i class="bi bi-calendar-week"></i></div><h3>Choose a doctor</h3><p class="small mb-0">Select a doctor above to view and edit their weekly schedule.</p></div>
+{% else %}
+<div class="card-x">
+  {% for day in week %}
+  <div class="day-row {% if not day.items %}off{% endif %}">
+    <div class="day-name"><span class="day-badge">{{ day.name|slice:":3" }}</span>{{ day.name }}</div>
+    <div>
+      {% for s in day.items %}
+      <span class="window {% if not s.is_active %}inactive{% endif %}">
+        <i class="bi bi-clock text-muted"></i>{{ s.start_time|as_time|time:"h:i A" }} – {{ s.end_time|as_time|time:"h:i A" }}
+        <span class="chip">{{ s.slot_duration }}m</span>
+        <span class="w-actions">
+          <button type="button" title="Edit" aria-label="Edit" data-bs-toggle="modal" data-bs-target="#editSchedule"
+                  data-id="{{ s.id }}" data-day="{{ s.day_of_week }}" data-start="{{ s.start_time|slice:':5' }}" data-end="{{ s.end_time|slice:':5' }}" data-slot="{{ s.slot_duration }}"><i class="bi bi-pencil"></i></button>
+          <form method="post" class="d-inline">{% csrf_token %}<input type="hidden" name="op" value="toggle"><input type="hidden" name="id" value="{{ s.id }}"><input type="hidden" name="is_active" value="{% if s.is_active %}0{% else %}1{% endif %}">
+            <button title="{% if s.is_active %}Disable{% else %}Enable{% endif %}" aria-label="Toggle"><i class="bi {% if s.is_active %}bi-pause-circle{% else %}bi-play-circle{% endif %}"></i></button></form>
+          <form method="post" class="d-inline" data-confirm="Delete this schedule?">{% csrf_token %}<input type="hidden" name="op" value="delete"><input type="hidden" name="id" value="{{ s.id }}">
+            <button title="Delete" aria-label="Delete"><i class="bi bi-trash3"></i></button></form>
+        </span>
+      </span>
+      {% empty %}<span class="off-label">OFF</span>{% endfor %}
+    </div>
+    <div><button class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#addSchedule" data-add-day="{{ day.value }}"><i class="bi bi-plus"></i> Add</button></div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="modal fade" id="addSchedule" tabindex="-1" aria-labelledby="addTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content" method="post" data-loading>{% csrf_token %}<input type="hidden" name="op" value="create">
+      <div class="modal-header"><h2 class="h5 mb-0" id="addTitle">Add schedule</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+      <div class="modal-body">
+        <span class="form-label d-block">Days</span>
+        <div class="day-picker mb-3">
+          {% for d in days %}<input type="checkbox" name="days" value="{{ forloop.counter0 }}" id="addDay{{ forloop.counter0 }}"><label for="addDay{{ forloop.counter0 }}">{{ d|slice:":3" }}</label>{% endfor %}
+        </div>
+        <div class="row g-3">
+          <div class="col-6"><label class="form-label" for="addStart">Start time</label><input class="form-control" type="time" id="addStart" name="start_time" value="09:00" required></div>
+          <div class="col-6"><label class="form-label" for="addEnd">End time</label><input class="form-control" type="time" id="addEnd" name="end_time" value="13:00" required></div>
+          <div class="col-12"><label class="form-label" for="addSlot">Slot duration</label>
+            <select class="form-select" id="addSlot" name="slot_duration">
+              <option value="15">15 minutes</option><option value="20">20 minutes</option><option value="30" selected>30 minutes</option><option value="45">45 minutes</option><option value="60">60 minutes</option></select></div>
+        </div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary">Add schedule</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="modal fade" id="editSchedule" tabindex="-1" aria-labelledby="editTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content" method="post" data-loading>{% csrf_token %}<input type="hidden" name="op" value="update"><input type="hidden" name="id">
+      <div class="modal-header"><h2 class="h5 mb-0" id="editTitle">Edit schedule</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+      <div class="modal-body row g-3">
+        <div class="col-12"><label class="form-label" for="editDay">Day</label><select class="form-select" id="editDay" name="day_of_week">{% for d in days %}<option value="{{ forloop.counter0 }}">{{ d }}</option>{% endfor %}</select></div>
+        <div class="col-6"><label class="form-label" for="editStart">Start time</label><input class="form-control" type="time" id="editStart" name="start_time" required></div>
+        <div class="col-6"><label class="form-label" for="editEnd">End time</label><input class="form-control" type="time" id="editEnd" name="end_time" required></div>
+        <div class="col-12"><label class="form-label" for="editSlot">Slot duration (minutes)</label><input class="form-control" type="number" min="5" max="240" step="5" id="editSlot" name="slot_duration" required></div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary">Save changes</button></div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/availability.js' %}"></script>{% endblock %}

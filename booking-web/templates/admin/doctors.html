@@ -1,0 +1,47 @@
+{% extends "base/base.html" %}
+{% load ui %}
+{% block title %}Doctors{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><h1>Doctors</h1><p>Create, approve and manage doctor accounts.</p></div>
+  <a href="/admin/doctors/new/" class="btn btn-primary"><i class="bi bi-person-plus me-1"></i>Add Doctor</a>
+</div>
+<div class="card-x">
+  <form method="get" class="card-x-header flex-wrap">
+    <nav class="segmented">
+      <a href="?" class="{% if not f.is_active %}active{% endif %}">All</a>
+      <a href="?is_active=1" class="{% if f.is_active == '1' %}active{% endif %}">Active</a>
+      <a href="?is_active=0" class="{% if f.is_active == '0' %}active{% endif %}">Pending / inactive</a>
+    </nav>
+    <div class="d-flex gap-2 flex-wrap">
+      <input type="hidden" name="is_active" value="{{ f.is_active|default:'' }}">
+      <select class="form-select form-select-sm" name="department" style="width:auto" onchange="this.form.submit()" aria-label="Department">
+        <option value="">All departments</option>{% for dp in departments %}<option value="{{ dp.id }}" {% if f.department == dp.id|stringformat:"s" %}selected{% endif %}>{{ dp.name }}</option>{% endfor %}</select>
+      <div class="input-icon"><i class="bi bi-search"></i><input class="form-control form-control-sm" name="q" value="{{ f.q|default:'' }}" placeholder="Name, code, specialty" aria-label="Search doctors"></div>
+    </div>
+  </form>
+  {% if doctors %}
+  <div class="table-responsive"><table class="table table-x">
+    <thead><tr><th>Doctor</th><th>Department</th><th>Experience</th><th>Fee</th><th>Schedule</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+    <tbody>{% for doc in doctors %}
+      <tr>
+        <td data-label="Doctor"><div class="person">{% if doc.profile_image %}<img class="avatar" src="{{ doc.profile_image|media }}" alt="">{% else %}<span class="avatar">{{ doc.full_name|initials }}</span>{% endif %}
+          <div><div class="cell-title">Dr. {{ doc.full_name }}</div><div class="cell-sub">{{ doc.doctor_code }} · {{ doc.specialization|default:"—" }}</div></div></div></td>
+        <td data-label="Department">{{ doc.department_name|default:"—" }}</td>
+        <td data-label="Experience">{{ doc.experience_years }} yrs</td>
+        <td data-label="Fee">{{ CURRENCY }}{{ doc.consultation_fee|floatformat:0 }}</td>
+        <td data-label="Schedule">{% if doc.available_days %}<span class="small">{{ doc.available_days|join:", "|truncatechars:28 }}</span>{% else %}<span class="text-muted small">Not set</span>{% endif %}</td>
+        <td data-label="Status">{% if not doc.is_active %}<span class="status status-pending">Pending / inactive</span>{% elif doc.is_available %}<span class="status status-completed">Active</span>{% else %}<span class="status status-no_show">Unavailable</span>{% endif %}</td>
+        <td data-label="" class="text-end"><div class="d-inline-flex gap-1">
+          <a href="/admin/doctors/{{ doc.id }}/edit/" class="btn btn-sm btn-light" title="Edit"><i class="bi bi-pencil"></i></a>
+          <a href="/admin/schedules/?doctor={{ doc.id }}" class="btn btn-sm btn-light" title="Schedule"><i class="bi bi-calendar-week"></i></a>
+          <form method="post" action="/admin/doctors/{{ doc.id }}/toggle/" data-loading {% if doc.is_active %}data-confirm="Deactivate Dr. {{ doc.full_name }}? They won't be able to log in or receive bookings."{% endif %}>{% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}"><input type="hidden" name="is_active" value="{% if doc.is_active %}0{% else %}1{% endif %}">
+            {% if doc.is_active %}<button class="btn btn-sm btn-outline-danger" title="Deactivate"><i class="bi bi-slash-circle"></i></button>{% else %}<button class="btn btn-sm btn-soft"><i class="bi bi-check2 me-1"></i>Approve</button>{% endif %}
+          </form></div></td>
+      </tr>{% endfor %}</tbody>
+  </table></div>
+  {% include "partials/pagination.html" %}
+  {% else %}<div class="empty"><div class="empty-icon"><i class="bi bi-heart-pulse"></i></div><h3>No doctors found</h3><a href="/admin/doctors/new/" class="btn btn-primary btn-sm">Add the first doctor</a></div>{% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,114 @@
+{% load ui %}
+{# Shared appointment detail. Context: appt, base (list URL prefix), me. #}
+{% with s=appt.status %}
+<div class="page-header">
+  <div>
+    <div class="breadcrumb-x"><a href="{{ base }}">Appointments</a><i class="bi bi-chevron-right small"></i><span>{{ appt.appointment_number }}</span></div>
+    <h1 class="d-flex align-items-center gap-3 flex-wrap">{{ appt.appointment_number }} <span class="status status-{{ appt.status|lower }}">{{ appt.status_display }}</span></h1>
+    <p>Booked {{ appt.created_at|as_datetime|date:"d M Y, h:i A" }} · via {{ appt.booking_source|title }}</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    {% if s == "PENDING" or s == "CONFIRMED" %}
+      {% if me.role == "DOCTOR" or me.role == "ADMIN" %}
+        {% if s == "PENDING" %}
+        <form method="post" action="{{ base }}{{ appt.id }}/confirm/" data-loading>{% csrf_token %}
+          <button class="btn btn-primary"><i class="bi bi-check2-circle me-1"></i>Confirm</button></form>
+        {% endif %}
+        <button class="btn btn-soft" data-bs-toggle="modal" data-bs-target="#completeModal"><i class="bi bi-clipboard2-check me-1"></i>Complete</button>
+        <form method="post" action="{{ base }}{{ appt.id }}/no_show/" data-loading data-confirm="Mark this appointment as a no-show?">{% csrf_token %}
+          <button class="btn btn-light"><i class="bi bi-person-x me-1"></i>No-show</button></form>
+      {% endif %}
+      {% if me.role == "PATIENT" or me.role == "ADMIN" %}
+        <a class="btn btn-light" href="{{ base }}{{ appt.id }}/reschedule/"><i class="bi bi-arrow-repeat me-1"></i>Reschedule</a>
+      {% endif %}
+      <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal"
+              data-cancel-url="{{ base }}{{ appt.id }}/cancel/" data-cancel-number="{{ appt.appointment_number }}"><i class="bi bi-x-circle me-1"></i>Cancel</button>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card-x mb-4">
+      <div class="card-x-header"><h2>Appointment details</h2></div>
+      <div class="card-x-body">
+        <dl class="detail-grid mb-0">
+          <div><dt>Date</dt><dd><i class="bi bi-calendar3 text-muted me-1"></i>{{ appt.appointment_date|as_date|date:"l, d F Y" }}</dd></div>
+          <div><dt>Time</dt><dd><i class="bi bi-clock text-muted me-1"></i>{{ appt.start_time|as_time|time:"h:i A" }} – {{ appt.end_time|as_time|time:"h:i A" }}</dd></div>
+          <div><dt>Department</dt><dd>{{ appt.department.name|default:"—" }}</dd></div>
+          <div><dt>Consultation fee</dt><dd>{{ CURRENCY }}{{ appt.doctor.consultation_fee }}</dd></div>
+        </dl>
+        <hr class="my-4">
+        <div class="mb-3"><div class="small-caps mb-2">Reason for visit</div><div class="note-box">{{ appt.reason }}</div></div>
+        <div class="mb-3"><div class="small-caps mb-2">Patient notes</div><div class="note-box">{{ appt.patient_notes|default:"No notes added." }}</div></div>
+        <div><div class="small-caps mb-2">Doctor notes</div><div class="note-box">{{ appt.doctor_notes|default:"No notes yet." }}</div></div>
+        {% if appt.status == "CANCELLED" %}
+        <div class="alert alert-danger mt-4 mb-0 small"><strong>Cancelled</strong> by {{ appt.cancelled_by_name|default:"—" }} on {{ appt.cancelled_at|as_datetime|date:"d M Y, h:i A" }}.<br>Reason: {{ appt.cancellation_reason }}</div>
+        {% endif %}
+        {% if appt.completed_at %}<div class="alert alert-success mt-4 mb-0 small"><i class="bi bi-check2-circle me-1"></i>Completed on {{ appt.completed_at|as_datetime|date:"d M Y, h:i A" }}.</div>{% endif %}
+      </div>
+    </div>
+    {% if appt.rescheduled_from or appt.rescheduled_to %}
+    <div class="card-x">
+      <div class="card-x-header"><h2>Reschedule history</h2></div>
+      <div class="card-x-body d-grid gap-2">
+        {% if appt.rescheduled_from %}
+        <a class="history-link" href="{{ base }}{{ appt.rescheduled_from }}/"><i class="bi bi-arrow-left-circle"></i>Rescheduled from {{ appt.rescheduled_from_number }}{% if appt.reschedule_reason %} — “{{ appt.reschedule_reason }}”{% endif %}</a>
+        {% endif %}
+        {% if appt.rescheduled_to %}
+        <a class="history-link" href="{{ base }}{{ appt.rescheduled_to.id }}/"><i class="bi bi-arrow-right-circle"></i>Moved to {{ appt.rescheduled_to.appointment_number }}</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  <div class="col-lg-4">
+    <div class="card-x mb-4">
+      <div class="card-x-header"><h2>Doctor</h2></div>
+      <div class="card-x-body">
+        <div class="person mb-3">
+          {% if appt.doctor.profile_image %}<img class="avatar avatar-lg" src="{{ appt.doctor.profile_image|media }}" alt="">{% else %}<span class="avatar avatar-lg">{{ appt.doctor.name|initials }}</span>{% endif %}
+          <div><div class="p-name">Dr. {{ appt.doctor.name }}</div><div class="p-sub">{{ appt.doctor.specialization|default:"Specialist" }}</div><div class="p-sub">{{ appt.doctor.doctor_code }}</div></div>
+        </div>
+        <ul class="info-list">
+          {% if appt.doctor.phone_number %}<li><i class="bi bi-telephone"></i>{{ appt.doctor.phone_number }}</li>{% endif %}
+          <li><i class="bi bi-envelope"></i>{{ appt.doctor.email }}</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card-x">
+      <div class="card-x-header"><h2>Patient</h2></div>
+      <div class="card-x-body">
+        <div class="person mb-3">
+          <span class="avatar avatar-lg">{{ appt.patient.name|initials }}</span>
+          <div><div class="p-name">{{ appt.patient.name }}</div><div class="p-sub">{{ appt.patient.patient_code }}</div></div>
+        </div>
+        <ul class="info-list">
+          <li><i class="bi bi-envelope"></i>{{ appt.patient.email }}</li>
+          {% if appt.patient.phone_number %}<li><i class="bi bi-telephone"></i>{{ appt.patient.phone_number }}</li>{% endif %}
+          {% if appt.patient.gender %}<li><i class="bi bi-person"></i>{{ appt.patient.gender|title }}</li>{% endif %}
+          {% if appt.patient.date_of_birth %}<li><i class="bi bi-cake2"></i>{{ appt.patient.date_of_birth|as_date|date:"d M Y" }}</li>{% endif %}
+          {% if appt.patient.blood_group %}<li><i class="bi bi-droplet"></i>Blood group {{ appt.patient.blood_group }}</li>{% endif %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% include "partials/cancel_modal.html" %}
+{% if me.role == "DOCTOR" or me.role == "ADMIN" %}
+<div class="modal fade" id="completeModal" tabindex="-1" aria-labelledby="completeTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content" method="post" action="{{ base }}{{ appt.id }}/complete/" data-loading>
+      {% csrf_token %}
+      <div class="modal-header"><h2 class="h5 mb-0" id="completeTitle">Complete appointment</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+      <div class="modal-body">
+        <label class="form-label" for="doctorNotes">Doctor notes <span class="text-muted fw-normal">(optional)</span></label>
+        <textarea class="form-control" id="doctorNotes" name="doctor_notes" rows="4" placeholder="Diagnosis, prescription, follow-up…">{{ appt.doctor_notes }}</textarea>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button><button class="btn btn-primary"><i class="bi bi-check2-all me-1"></i>Mark completed</button></div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endwith %}
