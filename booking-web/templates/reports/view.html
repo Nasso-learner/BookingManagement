@@ -6,7 +6,7 @@
   <div>
     <div class="breadcrumb-x"><a href="/reports/">Reports</a><i class="bi bi-chevron-right small"></i><span>{{ report.title }}</span></div>
     <h1>{{ report.title }}</h1>
-    <p>{{ report.description }}{% if me.role == "DOCTOR" %} · showing your data only{% endif %}</p>
+    <p>{% if report.source == "CLICKHOUSE" %}<span class="chip me-1" style="background:var(--warning-50);color:var(--warning)"><i class="bi bi-lightning-charge-fill"></i>ClickHouse</span>{% endif %}{{ report.description }}{% if me.role == "DOCTOR" %} · showing your data only{% endif %}</p>
   </div>
   <div class="d-flex gap-2 flex-wrap align-items-center">
     <form method="get" class="d-flex align-items-center gap-2">

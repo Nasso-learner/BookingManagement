@@ -67,3 +67,35 @@ class ReadOnlyTests(TransactionTestCase):
     def test_data_modifying_cte_is_blocked(self):
         with self.assertRaises(ValidationError):
             engine.run("WITH d AS (DELETE FROM departments_department RETURNING id) SELECT count(*) FROM d")
+
+
+class FakeClickHouse:
+    def __init__(self):
+        self.calls = []
+
+    def query(self, sql, parameters=None, settings=None):
+        self.calls.append((sql, parameters, settings))
+        return type("R", (), {"column_names": ("doctor_id",), "result_rows": [((parameters or {}).get("doctor_id"),)]})()
+
+
+@override_settings(CLICKHOUSE_HOST="ch.local", REPORTS_MAX_ROWS=50, REPORTS_TIMEOUT_MS=5000)
+class ClickHouseEngineTests(TestCase):
+    def test_doctor_id_is_server_bound_and_limits_sent(self):
+        from unittest import mock
+
+        fake = FakeClickHouse()
+        with mock.patch.object(engine, "_clickhouse_client", return_value=fake):
+            out = engine.run("SELECT doctor_id FROM reporting.appointments WHERE (:doctor_id IS NULL OR doctor_id = :doctor_id) "
+                             "AND appointment_date::Date > '2020-01-01' AND status LIKE '%'", doctor_id=7, source=engine.CLICKHOUSE)
+        sql, params, settings = fake.calls[0]
+        self.assertIn("{doctor_id:Nullable(Int64)} IS NULL", sql)
+        self.assertIn("::Date", sql)  # casts untouched
+        self.assertEqual(params, {"doctor_id": 7})
+        self.assertEqual(settings["max_result_rows"], 51)
+        self.assertEqual(settings["max_execution_time"], 5)
+        self.assertEqual(out["source"], "CLICKHOUSE")
+
+    @override_settings(CLICKHOUSE_HOST="")
+    def test_not_configured(self):
+        with self.assertRaises(ValidationError):
+            engine.run("SELECT 1", source=engine.CLICKHOUSE)

@@ -13,11 +13,12 @@ from .models import Report
 
 class ReportSerializer(serializers.ModelSerializer):
     chart_type_display = serializers.CharField(source="get_chart_type_display", read_only=True)
+    source_display = serializers.CharField(source="get_source_display", read_only=True)
 
     class Meta:
         model = Report
-        fields = ["id", "title", "description", "sql", "chart_type", "chart_type_display", "x_column", "y_columns",
-                  "series_column", "doctor_access", "is_active", "created_at", "updated_at"]
+        fields = ["id", "title", "description", "source", "source_display", "sql", "chart_type", "chart_type_display",
+                  "x_column", "y_columns", "series_column", "doctor_access", "is_active", "created_at", "updated_at"]
 
     def validate(self, attrs):
         sql = attrs.get("sql", getattr(self.instance, "sql", ""))
@@ -66,7 +67,7 @@ class ReportViewSet(viewsets.ModelViewSet):
     def run(self, request, pk=None):
         report = self.get_object()
         try:
-            result = engine.run(report.sql, doctor_id=_scope(request.user))
+            result = engine.run(report.sql, doctor_id=_scope(request.user), source=report.source)
         except ValidationError:
             if request.user.role == Role.ADMIN:
                 raise
@@ -79,4 +80,8 @@ class ReportViewSet(viewsets.ModelViewSet):
         """Admin-only: run unsaved SQL. Pass doctor_id to preview what a given doctor would see."""
         doctor_id = request.data.get("doctor_id") or None
         engine.validate_sql(request.data.get("sql"), doctor_access=bool(doctor_id))
-        return Response(engine.run(request.data.get("sql"), doctor_id=int(doctor_id) if doctor_id else None))
+        source = request.data.get("source") or engine.POSTGRES
+        if source not in (engine.POSTGRES, engine.CLICKHOUSE):
+            raise ValidationError({"source": "Unknown data source."})
+        return Response(engine.run(request.data.get("sql"), doctor_id=int(doctor_id) if doctor_id else None,
+                                   source=source))

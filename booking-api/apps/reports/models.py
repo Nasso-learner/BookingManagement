@@ -16,8 +16,13 @@ class Report(models.Model):
         PIE = "PIE", "Donut"
         SCATTER = "SCATTER", "Scatter"
 
+    class Source(models.TextChoices):
+        POSTGRES = "POSTGRES", "PostgreSQL"
+        CLICKHOUSE = "CLICKHOUSE", "ClickHouse (high performance)"
+
     title = models.CharField(max_length=150)
     description = models.CharField(max_length=300, blank=True)
+    source = models.CharField(max_length=12, choices=Source.choices, default=Source.POSTGRES)
     sql = models.TextField(help_text="One SELECT/WITH statement. Use :doctor_id to scope rows for doctors.")
     chart_type = models.CharField(max_length=12, choices=Chart.choices, default=Chart.BAR)
     x_column = models.CharField(max_length=100, blank=True, help_text="Category / date column (default: first column)")

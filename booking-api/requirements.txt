@@ -4,3 +4,4 @@ djangorestframework-simplejwt>=5.3
 psycopg[binary]>=3.2
 Pillow>=10.4
 gunicorn>=23.0
+clickhouse-connect>=0.8

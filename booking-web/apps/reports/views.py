@@ -12,7 +12,8 @@ from . import charts
 
 admin_only = role_required("ADMIN")
 staff_only = role_required("ADMIN", "DOCTOR")
-FIELDS = ("title", "description", "sql", "chart_type", "x_column", "y_columns", "series_column")
+SOURCES = [("CLICKHOUSE", "ClickHouse (high performance)"), ("POSTGRES", "PostgreSQL")]
+FIELDS = ("title", "description", "source", "sql", "chart_type", "x_column", "y_columns", "series_column")
 
 
 @staff_only
@@ -36,7 +37,7 @@ def report_view(request, pk):
 
 @admin_only
 def report_form(request, pk=None):
-    report = api.get(request, f"/reports/{pk}/") if pk else {"chart_type": "BAR", "is_active": True}
+    report = api.get(request, f"/reports/{pk}/") if pk else {"chart_type": "BAR", "is_active": True, "source": "CLICKHOUSE"}
     errors = {}
     if request.method == "POST":
         data = {k: request.POST.get(k, "") for k in FIELDS}
@@ -51,7 +52,7 @@ def report_form(request, pk=None):
             report = {**report, **data}
     doctors = api.get(request, "/doctors/", {"is_active": 1, "page_size": 100})["results"]
     return render(request, "reports/form.html", {"report": report, "pk": pk, "errors": errors, "doctors": doctors,
-                                                 "chart_types": charts.CHART_TYPES})
+                                                 "chart_types": charts.CHART_TYPES, "sources": SOURCES})
 
 
 @admin_only
@@ -68,7 +69,8 @@ def report_preview(request):
     """Builder live preview: run unsaved SQL (optionally as a doctor) and return figure + rows."""
     cfg = json.loads(request.body or "{}")
     try:
-        result = api.post(request, "/reports/preview/", {"sql": cfg.get("sql", ""), "doctor_id": cfg.get("doctor_id") or None})
+        result = api.post(request, "/reports/preview/", {"sql": cfg.get("sql", ""), "doctor_id": cfg.get("doctor_id") or None,
+                                                         "source": cfg.get("source") or "POSTGRES"})
         return JsonResponse({**result, "output": charts.build(cfg, result)})
     except (api.APIError, charts.ChartError) as e:
         return JsonResponse({"error": getattr(e, "message", None) or str(e)}, status=400)

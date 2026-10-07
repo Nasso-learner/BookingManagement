@@ -31,7 +31,7 @@
         method: "POST",
         headers: { "Content-Type": "application/json", "X-CSRFToken": window.MB.csrf() },
         body: JSON.stringify({
-          sql: field("sql"), chart_type: field("chart_type"), x_column: field("x_column"),
+          sql: field("sql"), source: field("source"), chart_type: field("chart_type"), x_column: field("x_column"),
           y_columns: field("y_columns"), series_column: field("series_column"),
           doctor_id: document.getElementById("previewAs").value || null,
         }),
@@ -40,7 +40,7 @@
       if (!r.ok) throw new Error(data.error || "Preview failed.");
       document.getElementById("colList").innerHTML = data.columns.map((c) => `<option value="${esc(c)}">`).join("");
       const out = data.output;
-      const meta = `<div class="small text-muted mb-2">${data.rows.length} row(s)${data.truncated ? " (truncated)" : ""} · ${data.elapsed_ms} ms · columns: ${data.columns.map(esc).join(", ")}</div>`;
+      const meta = `<div class="small text-muted mb-2">${data.rows.length} row(s)${data.truncated ? " (truncated)" : ""} · ${data.elapsed_ms} ms · ${data.source === "CLICKHOUSE" ? "ClickHouse" : "PostgreSQL"} · columns: ${data.columns.map(esc).join(", ")}</div>`;
       if (out.kind === "number") {
         area.innerHTML = `${meta}<div class="text-center py-4"><div class="small-caps mb-2">${esc(out.label)}</div><div style="font-size:3rem;font-weight:800;color:var(--ink)">${esc(out.value ?? "—")}</div></div>${table(data.columns, data.rows)}`;
       } else if (out.kind === "plot") {
@@ -58,6 +58,6 @@
 
   btn.addEventListener("click", preview);
   form.elements.sql.addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); preview(); } });
-  ["chart_type"].forEach((n) => form.elements[n].addEventListener("change", () => field("sql").trim() && preview()));
+  ["chart_type", "source"].forEach((n) => form.elements[n].addEventListener("change", () => field("sql").trim() && preview()));
   if (field("sql").trim()) preview();
 })();

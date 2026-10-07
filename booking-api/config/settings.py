@@ -142,11 +142,18 @@ METABASE_EMBED_MINUTES = int(env("METABASE_EMBED_MINUTES") or 60)
 # Plotly report engine. Report SQL runs on a separate read-only login (see reports/setup_reports.sql).
 if env("REPORTS_DB_USER"):
     DATABASES["reporting"] = {**DATABASES["default"], "USER": env("REPORTS_DB_USER"),
-                              "PASSWORD": env("REPORTS_DB_PASSWORD"), "CONN_MAX_AGE": 0,
+                              "PASSWORD": env("REPORTS_DB_PASSWORD"), "CONN_MAX_AGE": 60,
                               "TEST": {"MIRROR": "default"}}
 REPORTS_DB_ALIAS = "reporting" if "reporting" in DATABASES else "default"  # default = no read-only role yet
 REPORTS_TIMEOUT_MS = int(env("REPORTS_TIMEOUT_MS") or 5000)
 REPORTS_MAX_ROWS = int(env("REPORTS_MAX_ROWS") or 2000)
+
+# ClickHouse (high-performance report source, fed from PostgreSQL by PeerDB CDC). Empty host = disabled.
+CLICKHOUSE_HOST = env("CLICKHOUSE_HOST", "")
+CLICKHOUSE_PORT = int(env("CLICKHOUSE_PORT") or 8123)
+CLICKHOUSE_SECURE = env_bool("CLICKHOUSE_SECURE", False)
+CLICKHOUSE_REPORT_USER = env("CLICKHOUSE_REPORT_USER", "report_reader")
+CLICKHOUSE_REPORT_PASSWORD = env("CLICKHOUSE_REPORT_PASSWORD", "")
 
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

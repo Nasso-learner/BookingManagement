@@ -13,7 +13,7 @@
 
 {% if result %}
 <details class="mt-3" {% if output.kind == "table" %}open{% endif %}>
-  <summary class="small fw-semibold text-muted mb-2" style="cursor:pointer">Data table · {{ result.rows|length }} row{{ result.rows|length|pluralize }}{% if result.truncated %} (truncated){% endif %} · {{ result.elapsed_ms }} ms</summary>
+  <summary class="small fw-semibold text-muted mb-2" style="cursor:pointer">Data table · {{ result.rows|length }} row{{ result.rows|length|pluralize }}{% if result.truncated %} (truncated){% endif %} · {{ result.elapsed_ms }} ms · {% if result.source == "CLICKHOUSE" %}ClickHouse{% else %}PostgreSQL{% endif %}</summary>
   {% if result.rows %}
   <div class="table-responsive border rounded-3" style="max-height:420px">
     <table class="table table-x table-sm mb-0">

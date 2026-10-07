@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from apps.accounts.models import Role, User
@@ -39,16 +40,42 @@ STARTERS = [
      "FROM reporting.patients GROUP BY DATE_TRUNC('month', created_at) ORDER BY DATE_TRUNC('month', created_at)"),
 ]
 
+# ClickHouse versions (high-performance source). Same views/columns, ClickHouse SQL functions.
+CH_STARTERS = [
+    ("Appointments per day (ClickHouse)", "ClickHouse · last 90 days by status", "STACKED_BAR", "day", "appointments", "status", True,
+     f"SELECT appointment_date AS day, status, count() AS appointments FROM reporting.appointments "
+     f"WHERE appointment_date >= today() - 90 AND {SCOPE} GROUP BY day, status ORDER BY day"),
+    ("Doctor scorecard (ClickHouse)", "ClickHouse · last 90 days", "TABLE", "", "", "", False,
+     "SELECT doctor_name, department_name, count() AS total, countIf(status = 'COMPLETED') AS completed, "
+     "countIf(status = 'CANCELLED') AS cancelled, countIf(status = 'NO_SHOW') AS no_shows, "
+     "round(100 * countIf(status = 'NO_SHOW') / nullIf(countIf(status IN ('COMPLETED', 'NO_SHOW')), 0), 1) AS no_show_pct, "
+     "sumIf(consultation_fee, status = 'COMPLETED') AS revenue "
+     "FROM reporting.appointments WHERE appointment_date >= today() - 90 "
+     "GROUP BY doctor_name, department_name ORDER BY total DESC"),
+    ("Revenue by month (ClickHouse)", "ClickHouse · completed visits x fee", "BAR", "month", "revenue", "", True,
+     f"SELECT formatDateTime(toStartOfMonth(appointment_date), '%b %Y') AS month, sumIf(consultation_fee, status = 'COMPLETED') AS revenue "
+     f"FROM reporting.appointments WHERE {SCOPE} GROUP BY toStartOfMonth(appointment_date) AS m, month ORDER BY m"),
+    ("Slot utilisation (next 14 days) (ClickHouse)", "ClickHouse · booked vs published slots", "HBAR", "doctor_name", "utilisation_pct", "", True,
+     f"SELECT c.doctor_name AS doctor_name, round(100 * countIf(a.id != 0) / nullIf(c.weekly_slots * 2, 0), 1) AS utilisation_pct "
+     f"FROM reporting.doctor_capacity AS c LEFT JOIN (SELECT id, doctor_id FROM reporting.appointments "
+     f"WHERE status IN ('PENDING', 'CONFIRMED') AND appointment_date BETWEEN today() AND today() + 13) AS a ON a.doctor_id = c.doctor_id "
+     f"WHERE c.doctor_active AND (:doctor_id IS NULL OR c.doctor_id = :doctor_id) "
+     f"GROUP BY c.doctor_name, c.weekly_slots ORDER BY utilisation_pct"),
+]
+
 
 class Command(BaseCommand):
     help = "Create starter Plotly reports (skips titles that already exist)."
 
     def handle(self, *args, **opts):
         admin = User.objects.filter(role=Role.ADMIN).first()
+        starters = [(row, Report.Source.POSTGRES) for row in STARTERS]
+        if settings.CLICKHOUSE_HOST:
+            starters += [(row, Report.Source.CLICKHOUSE) for row in CH_STARTERS]
         created = 0
-        for title, desc, chart, x, y, series, doctor_access, sql in STARTERS:
+        for (title, desc, chart, x, y, series, doctor_access, sql), source in starters:
             _, new = Report.objects.get_or_create(title=title, defaults=dict(
-                description=desc, chart_type=chart, x_column=x, y_columns=y, series_column=series,
+                description=desc, source=source, chart_type=chart, x_column=x, y_columns=y, series_column=series,
                 doctor_access=doctor_access, sql=sql, created_by=admin))
             created += new
-        self.stdout.write(self.style.SUCCESS(f"{created} report(s) created, {len(STARTERS) - created} already existed."))
+        self.stdout.write(self.style.SUCCESS(f"{created} report(s) created, {len(starters) - created} already existed."))

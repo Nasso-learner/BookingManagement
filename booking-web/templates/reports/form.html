@@ -22,6 +22,12 @@
             <div class="invalid-feedback">{{ errors.title }}</div></div>
           <div><label class="form-label" for="description">Description</label>
             <input class="form-control" id="description" name="description" value="{{ report.description|default:'' }}" maxlength="300"></div>
+          <div><label class="form-label" for="source">Data source</label>
+            <select class="form-select {% if errors.source %}is-invalid{% endif %}" id="source" name="source">
+              {% for v, l in sources %}<option value="{{ v }}" {% if report.source == v %}selected{% endif %}>{{ l }}</option>{% endfor %}
+            </select>
+            <div class="form-text">ClickHouse: pre-joined copies of the reporting views, refreshed ~every 30–40s by CDC. Use ClickHouse SQL (countIf, sumIf, today()).</div>
+            <div class="invalid-feedback">{{ errors.source }}</div></div>
           <div>
             <div class="d-flex justify-content-between"><label class="form-label" for="sql">SQL</label><span class="small text-muted">Ctrl+Enter to preview</span></div>
             <textarea class="form-control font-monospace {% if errors.sql %}is-invalid{% endif %}" id="sql" name="sql" rows="11" spellcheck="false" style="font-size:.82rem"
@@ -31,6 +37,7 @@
           <details class="small">
             <summary class="fw-semibold text-muted" style="cursor:pointer">Available views &amp; rules</summary>
             <ul class="mt-2 mb-0 text-muted ps-3">
+              <li>Same view names and columns in both sources.</li>
               <li><code>reporting.appointments</code>: appointment_date, start_hour, weekday, status, booking_source, doctor_id, doctor_name, specialization, department_name, consultation_fee, patient_id, patient_code, lead_days, created_at…</li>
               <li><code>reporting.doctor_capacity</code>: doctor_id, doctor_name, department_name, weekly_slots</li>
               <li><code>reporting.patients</code>: patient_id, gender, blood_group, city, created_at</li>

@@ -1,0 +1,40 @@
+# Adds ClickHouse to PeerDB's official quickstart stack and moves PeerDB's UI off port 3000 (Metabase uses it).
+# Start everything (from analytics-stack/):
+#   docker compose -f peerdb/docker-compose.yml -f docker-compose.clickhouse.yml up -d
+services:
+  clickhouse:
+    container_name: clickhouse
+    image: clickhouse/clickhouse-server:25.8
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8123:8123"   # HTTP (booking-api, clickhouse-connect) - bound to localhost only
+      - "127.0.0.1:9000:9000"   # native protocol
+    environment:
+      CLICKHOUSE_USER: ch_admin
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_ADMIN_PASSWORD:-ChAdmin@123}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+      CLICKHOUSE_DB: booking
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # reach PeerDB's MinIO staging bucket
+    ulimits:
+      nofile: { soft: 262144, hard: 262144 }
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+      - ../clickhouse/init:/docker-entrypoint-initdb.d:ro   # paths resolve from peerdb/ (the first -f file)
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--user", "ch_admin", "--password", "${CLICKHOUSE_ADMIN_PASSWORD:-ChAdmin@123}", "-q", "SELECT 1"]
+      interval: 5s
+      retries: 30
+
+  peerdb-ui:
+    ports: !override
+      - "3001:3000"
+    environment:
+      NEXTAUTH_URL: http://localhost:3001
+
+  temporal-ui:
+    environment:
+      TEMPORAL_CORS_ORIGINS: http://localhost:3001
+
+volumes:
+  clickhouse-data:
