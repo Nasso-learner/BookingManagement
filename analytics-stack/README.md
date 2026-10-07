@@ -61,15 +61,3 @@ docker compose -f peerdb/docker-compose.yml -f docker-compose.clickhouse.yml sto
 - Put the PeerDB UI behind authentication or keep it off the public network.
 - Back up ClickHouse volumes and watch replication-slot lag in PostgreSQL (`pg_replication_slots`).
 
-
-def is_valid_params(param_str):
-stack= []
-pairs= {')':'(','}':'{',']':'['
-    }
-   forchinparam_str:
-      ifchin"({[":
-         stack.append(ch)
-      else:
-         ifnotstackorstack.pop()!=pairs[ch]:
-         returnFalse
-   return len(stack)==0
