@@ -1,0 +1,20 @@
+<section class="card-x ix-viz span-{{ span }}" data-viz="{{ id }}" aria-labelledby="viz-title-{{ id }}">
+  <header class="ix-viz-head">
+    <div class="min-w-0">
+      <h2 id="viz-title-{{ id }}">{{ title }}</h2>
+      <p>{{ sub }}</p>
+    </div>
+    <div class="ix-viz-actions">
+      <button type="button" data-act="table" title="Show as table" aria-label="Show {{ title }} as table"><i class="bi bi-table"></i></button>
+      <button type="button" data-act="csv" title="Download CSV" aria-label="Download {{ title }} as CSV"><i class="bi bi-download"></i></button>
+      <button type="button" data-act="png" title="Save image" aria-label="Save {{ title }} as image"><i class="bi bi-image"></i></button>
+      <button type="button" data-act="expand" title="Focus mode" aria-label="Expand {{ title }}"><i class="bi bi-arrows-fullscreen"></i></button>
+    </div>
+  </header>
+  <div class="ix-viz-body">
+    <div class="ix-chart" role="img" aria-label="{{ title }}"></div>
+    <div class="ix-table" hidden></div>
+    <div class="ix-empty" hidden><i class="bi bi-bar-chart"></i><span>No data for these filters</span></div>
+    <div class="ix-loading"><div class="ix-shimmer"></div></div>
+  </div>
+</section>

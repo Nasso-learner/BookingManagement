@@ -1,0 +1,78 @@
+{% extends "base/base.html" %}
+{% load static %}
+{% block title %}Insights{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'css/insights.css' %}">{% endblock %}
+{% block content %}
+<div id="insights" data-role="{{ me.role }}">
+  <div class="page-header mb-3">
+    <div>
+      <h1>{% if me.role == "ADMIN" %}Clinic insights{% else %}My practice insights{% endif %}</h1>
+      <p>{% if me.role == "ADMIN" %}Every department and doctor. Click any bar or slice to filter the whole page.{% else %}Your appointments and patients only. Click any bar or slice to filter the page.{% endif %}</p>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <span class="ix-meta" id="ixMeta" aria-live="polite"></span>
+      <button class="btn btn-light btn-sm" id="ixRefresh" title="Refresh"><i class="bi bi-arrow-clockwise"></i></button>
+      <button class="btn btn-light btn-sm" id="ixReset"><i class="bi bi-funnel me-1"></i>Reset filters</button>
+    </div>
+  </div>
+
+  <!-- Filter pane (Power BI style slicers) -->
+  <div class="card-x ix-filters mb-3">
+    <div class="ix-filter-row">
+      <div class="segmented" role="group" aria-label="Date range" id="ixPresets">
+        <a href="#" data-preset="7">7D</a><a href="#" data-preset="30">30D</a><a href="#" data-preset="90">90D</a>
+        <a href="#" data-preset="180">6M</a><a href="#" data-preset="365">12M</a><a href="#" data-preset="ytd">YTD</a>
+      </div>
+      <div class="d-flex align-items-center gap-1">
+        <input type="date" class="form-control form-control-sm" id="ixFrom" aria-label="From date">
+        <span class="text-muted small">to</span>
+        <input type="date" class="form-control form-control-sm" id="ixTo" aria-label="To date">
+      </div>
+      <select class="form-select form-select-sm" id="ixDepartment" aria-label="Department"><option value="">All departments</option></select>
+      {% if me.role == "ADMIN" %}<select class="form-select form-select-sm" id="ixDoctor" aria-label="Doctor"><option value="">All doctors</option></select>{% endif %}
+      <select class="form-select form-select-sm" id="ixStatus" aria-label="Status"><option value="">All statuses</option></select>
+    </div>
+    <div class="ix-chips" id="ixChips"></div>
+  </div>
+
+  <div class="alert alert-warning d-none" id="ixError" role="alert"></div>
+
+  <!-- KPI tiles -->
+  <div class="ix-kpis mb-3" id="ixKpis">
+    <div class="card-x ix-kpi" data-kpi="total"><div class="ix-kpi-label">Appointments</div><div class="ix-kpi-value">–</div><div class="ix-kpi-delta"></div></div>
+    <div class="card-x ix-kpi" data-kpi="completion"><div class="ix-kpi-label">Completion rate</div><div class="ix-kpi-value">–</div><div class="ix-kpi-delta"></div></div>
+    <div class="card-x ix-kpi" data-kpi="no_show"><div class="ix-kpi-label">No-show rate</div><div class="ix-kpi-value">–</div><div class="ix-kpi-delta"></div></div>
+    <div class="card-x ix-kpi" data-kpi="revenue"><div class="ix-kpi-label">Revenue</div><div class="ix-kpi-value">–</div><div class="ix-kpi-delta"></div></div>
+    <div class="card-x ix-kpi" data-kpi="patients"><div class="ix-kpi-label">Unique patients</div><div class="ix-kpi-value">–</div><div class="ix-kpi-delta"></div></div>
+    <div class="card-x ix-kpi" data-kpi="lead"><div class="ix-kpi-label">Avg booking lead time</div><div class="ix-kpi-value">–</div><div class="ix-kpi-delta"></div></div>
+  </div>
+
+  <!-- Visuals -->
+  <div class="ix-grid">
+    {% include "insights/_viz.html" with id="trend" span="8" title="Appointments over time" sub="Stacked by status · drag the slider to zoom" %}
+    {% include "insights/_viz.html" with id="status" span="4" title="Status mix" sub="Click a slice to filter" %}
+    {% include "insights/_viz.html" with id="revenue" span="6" title="Revenue over time" sub="Completed visits × consultation fee" %}
+    {% include "insights/_viz.html" with id="departments" span="6" title="Appointments by department" sub="Click a bar to filter" %}
+    {% if me.role == "ADMIN" %}
+    {% include "insights/_viz.html" with id="doctors" span="7" title="Doctor leaderboard" sub="Top 10 by appointments · click a doctor to filter" %}
+    {% include "insights/_viz.html" with id="utilisation" span="5" title="Slot utilisation · next 14 days" sub="Open bookings ÷ published slots" %}
+    {% else %}
+    {% include "insights/_viz.html" with id="utilisation" span="4" title="Slot utilisation · next 14 days" sub="Open bookings ÷ published slots" %}
+    {% endif %}
+    {% include "insights/_viz.html" with id="heatmap" span="8" title="Busiest days & hours" sub="Appointments by weekday and start hour" %}
+    {% if me.role == "ADMIN" %}
+    {% include "insights/_viz.html" with id="lead" span="4" title="Booking lead time" sub="Days between booking and visit" %}
+    {% include "insights/_viz.html" with id="source" span="6" title="Booking source" sub="Web vs booked by admin" %}
+    {% include "insights/_viz.html" with id="gender" span="6" title="Patients by gender" sub="Unique patients in the period" %}
+    {% else %}
+    {% include "insights/_viz.html" with id="lead" span="4" title="Booking lead time" sub="Days between booking and visit" %}
+    {% include "insights/_viz.html" with id="source" span="4" title="Booking source" sub="Web vs booked by admin" %}
+    {% include "insights/_viz.html" with id="gender" span="4" title="Patients by gender" sub="Unique patients in the period" %}
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.6.0/dist/echarts.min.js"></script>
+<script src="{% static 'js/insights.js' %}"></script>
+{% endblock %}

@@ -42,6 +42,7 @@ The browser never calls the API directly. In-page JavaScript (slot loading, noti
 | `apps/doctors` | `/doctor/…`: dashboard, appointments (confirm/complete/cancel/no-show), availability, patients, profile |
 | `apps/administration` | `/admin/…`: dashboard, doctors (create/approve/edit), patients, departments, appointments, schedules, audit logs |
 | `apps/reports` | `/reports/`: report list, viewer with a "view as" chart switch, and the admin SQL builder with live preview. `charts.py` builds the Plotly figures |
+| `apps/insights` | `/insights/`: Power BI-style dashboard (ECharts) with KPI tiles, slicers, cross-filtering, and table/CSV/PNG/focus per visual. Data via `/insights/data/` |
 | `templates/` | `base/`, `auth/`, `patient/`, `doctor/`, `admin/`, `errors/`, plus shared `partials/` |
 | `static/` | `css/` (design tokens in `style.css`), `js/` |
 

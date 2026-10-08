@@ -1,0 +1,77 @@
+/* Insights dashboard (Power BI-style). Uses the design tokens from style.css. */
+.ix-meta { font-size: .78rem; color: var(--muted); display: inline-flex; align-items: center; gap: .35rem; }
+.ix-meta .bi-lightning-charge-fill { color: var(--warning); }
+
+/* Slicer bar */
+.ix-filters { padding: .75rem 1rem; position: sticky; top: 72px; z-index: 20; }
+.ix-filter-row { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; }
+.ix-filter-row .form-select, .ix-filter-row .form-control { width: auto; min-width: 130px; }
+.ix-filter-row input[type=date] { min-width: 0; width: 152px; }
+.ix-chips { display: flex; flex-wrap: wrap; gap: .4rem; }
+.ix-chips:not(:empty) { margin-top: .6rem; }
+.ix-chip { display: inline-flex; align-items: center; gap: .35rem; padding: .25rem .4rem .25rem .65rem; border-radius: 999px;
+  background: var(--primary-50); color: var(--primary-700); font-size: .78rem; font-weight: 600; }
+.ix-chip button { border: 0; background: transparent; color: inherit; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; }
+.ix-chip button:hover { background: var(--primary-100); }
+
+/* KPI tiles */
+.ix-kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: .75rem; }
+.ix-kpi { padding: .9rem 1rem; position: relative; overflow: hidden; }
+.ix-kpi::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 3px; background: var(--primary); opacity: .8; }
+.ix-kpi-label { font-size: .74rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.ix-kpi-value { font-size: 1.65rem; font-weight: 800; color: var(--ink); letter-spacing: -.03em; line-height: 1.25; margin: .2rem 0 .1rem;
+  font-variant-numeric: tabular-nums; }
+.ix-kpi-delta { font-size: .75rem; font-weight: 600; color: var(--muted); display: flex; gap: .3rem; align-items: center; min-height: 1.1rem; }
+.ix-kpi-delta.good { color: var(--success); }
+.ix-kpi-delta.bad { color: var(--danger); }
+.ix-kpi-delta .vs { color: var(--muted); font-weight: 500; }
+
+/* Visual grid */
+.ix-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: .75rem; }
+.ix-viz { display: flex; flex-direction: column; min-width: 0; transition: box-shadow .2s; }
+.ix-viz:hover { box-shadow: var(--shadow); }
+.span-4 { grid-column: span 4; } .span-5 { grid-column: span 5; } .span-6 { grid-column: span 6; }
+.span-7 { grid-column: span 7; } .span-8 { grid-column: span 8; } .span-12 { grid-column: span 12; }
+.ix-viz-head { display: flex; justify-content: space-between; gap: .75rem; padding: .85rem 1rem .25rem; }
+.ix-viz-head h2 { font-size: .92rem; margin: 0; }
+.ix-viz-head p { font-size: .74rem; color: var(--muted); margin: .1rem 0 0; }
+.ix-viz-actions { display: flex; gap: 2px; opacity: .35; transition: opacity .15s; flex-shrink: 0; }
+.ix-viz:hover .ix-viz-actions, .ix-viz:focus-within .ix-viz-actions, .ix-viz.is-full .ix-viz-actions { opacity: 1; }
+.ix-viz-actions button { border: 0; background: transparent; width: 28px; height: 28px; border-radius: 7px; color: var(--muted); display: grid; place-items: center; }
+.ix-viz-actions button:hover, .ix-viz-actions button.active { background: var(--slate-50); color: var(--ink); }
+.ix-viz-body { position: relative; flex: 1; padding: 0 .5rem .5rem; }
+.ix-chart { height: 300px; width: 100%; }
+.ix-table { max-height: 300px; overflow: auto; margin: .25rem .5rem .5rem; border: 1px solid var(--line); border-radius: 10px; }
+.ix-table table { font-size: .8rem; margin: 0; }
+.ix-table th { position: sticky; top: 0; background: #fafbfd; font-size: .7rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.ix-table td, .ix-table th { padding: .4rem .7rem; white-space: nowrap; border-color: var(--line); }
+.ix-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.ix-empty { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .35rem;
+  color: var(--muted); font-size: .82rem; pointer-events: none; }
+.ix-empty i { font-size: 1.6rem; color: var(--line); }
+
+/* Loading shimmer (shown on first load only; refreshes keep the old chart visible) */
+.ix-loading { position: absolute; inset: 0 .5rem .5rem; border-radius: 10px; overflow: hidden; display: none; background: #fbfcfe; }
+.ix-viz.is-loading .ix-loading { display: block; }
+.ix-shimmer { position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(13,148,136,.06), transparent);
+  animation: ixShimmer 1.2s infinite; }
+@keyframes ixShimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+#insights.is-refreshing .ix-chart { opacity: .55; transition: opacity .15s; }
+
+/* Focus mode */
+.ix-viz.is-full { position: fixed; inset: 1.25rem; z-index: 1060; box-shadow: var(--shadow-lg); }
+.ix-viz.is-full .ix-chart { height: calc(100vh - 9rem); }
+.ix-viz.is-full .ix-table { max-height: calc(100vh - 9rem); }
+.ix-backdrop { position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 1055; }
+
+@media (max-width: 1399.98px) { .ix-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 1199.98px) {
+  .span-4, .span-5, .span-6, .span-7, .span-8 { grid-column: span 12; }
+  .ix-filters { position: static; }
+}
+@media (max-width: 575.98px) {
+  .ix-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ix-kpi-value { font-size: 1.3rem; }
+  .ix-filter-row .form-select, .ix-filter-row .form-control { min-width: 0; flex: 1 1 140px; }
+}
+@media (prefers-reduced-motion: reduce) { .ix-shimmer { animation: none; } }

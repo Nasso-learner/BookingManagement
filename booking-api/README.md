@@ -40,6 +40,7 @@ USE_SQLITE=1 python manage.py test apps
 | `notifications` | In-app notifications, plus the `send_reminders` command (run it daily from cron) |
 | `audit_logs` | `AuditLog` and the `audit()` helper (logins, logouts, every appointment/doctor/patient change) |
 | `reports` | Plotly report engine: saved SQL reports, run read-only as `report_reader` (setup: `apps/reports/setup_reports.sql`, starters: `python manage.py seed_reports`). Doctors only see shared reports, with `:doctor_id` bound to themselves |
+| `insights` | Power BI-style dashboard data: `GET /api/insights/clinic/` runs ~11 ClickHouse queries in parallel (bound filters, doctors pinned to themselves, 30 s cache) |
 | `analytics` | Signed Metabase static-embed URLs (`/api/analytics/embed/`). Setup steps are in [metabase/README.md](metabase/README.md) |
 
 Each app has its own `urls.py`. `config/urls.py` only mounts them under `/api/`.

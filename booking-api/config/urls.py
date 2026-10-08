@@ -14,4 +14,5 @@ urlpatterns = [
     path("api/", include("apps.audit_logs.urls")),
     path("api/", include("apps.analytics.urls")),
     path("api/", include("apps.reports.urls")),
+    path("api/", include("apps.insights.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)  # dev only; serve media via nginx/S3 in prod
